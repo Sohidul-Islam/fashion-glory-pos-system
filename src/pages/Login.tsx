@@ -1,9 +1,9 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import LogoSvg from "../assets/logo.svg?react";
-import EnvelopIcon from "../assets/icons/envalop.svg?react";
-import Lock from "../assets/icons/lock.svg?react";
+import LogoSvg from "@/components/icons/LogoSvg";
+import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
+import LockIcon from "@/components/icons/LockIcon";
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
 
@@ -55,7 +55,7 @@ const Login: React.FC = () => {
               Email*
             </label>
             <InputWithIcon
-              icon={EnvelopIcon}
+              icon={EnvelopeIcon}
               name="email"
               type="email"
               required
@@ -74,7 +74,7 @@ const Login: React.FC = () => {
               Password*
             </label>
             <InputWithIcon
-              icon={Lock}
+              icon={LockIcon}
               name="password"
               type="password"
               required

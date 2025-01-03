@@ -1,5 +1,7 @@
+import LogoSvg from "./icons/LogoSvg";
+
 const Logo: React.FC = () => {
-  return <div className="text-xl font-bold text-brand-primary">ItemPOS</div>;
+  return <LogoSvg className="h-8 w-auto" />;
 };
 
 export default Logo;

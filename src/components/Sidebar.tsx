@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa";
-import Logo from "./Logo";
+
 import { menuItems } from "../config/menuItems";
+import LogoSvg from "./icons/LogoSvg";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -36,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   return (
     <div className="h-screen bg-white shadow-lg w-sidebar">
       <div className="h-16 flex items-center justify-center border-b">
-        <Logo />
+        <LogoSvg className="h-[40px]" />
       </div>
 
       <nav className="mt-4 h-[calc(100vh-4rem)] overflow-y-auto">
