@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const location = useLocation();
 
-  // Close sidebar on mobile when navigating
+  // Close sidebar on mobile when navigating screen sizes.
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
