@@ -22,7 +22,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(credentials);
+    login(credentials.email, credentials.password);
     navigate("/dashboard");
   };
 
