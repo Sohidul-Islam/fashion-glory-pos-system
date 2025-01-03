@@ -1,15 +1,16 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LogoSvg from "../assets/logo.svg?react";
-import User from "../assets/icons/user.svg?react";
-import Mail from "../assets/icons/envalop.svg?react";
-import Phone from "../assets/icons/phone.svg?react";
-import Location from "../assets/icons/location.svg?react";
-import Business from "../assets/icons/business.svg?react";
-import Category from "../assets/icons/category.svg?react";
-import Lock from "../assets/icons/lock.svg?react";
+
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
+import LogoSvg from "@/components/icons/LogoSvg";
+import LockIcon from "@/components/icons/LockIcon";
+import LocationIcon from "@/components/icons/Location";
+import Category from "@/components/icons/Category";
+import UserIcon from "@/components/icons/UserIcon";
+import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
+import PhoneIcon from "@/components/icons/PhoneIcon";
+import BusinessIcon from "@/components/icons/BusinessIcon";
 
 interface RegisterForm {
   name: string;
@@ -71,7 +72,7 @@ const Register: React.FC = () => {
                 What's your name?
               </label>
               <InputWithIcon
-                icon={User}
+                icon={UserIcon}
                 name="name"
                 type="text"
                 required
@@ -90,7 +91,7 @@ const Register: React.FC = () => {
                 What's your Email*
               </label>
               <InputWithIcon
-                icon={Mail}
+                icon={EnvelopeIcon}
                 name="email"
                 type="email"
                 required
@@ -109,7 +110,7 @@ const Register: React.FC = () => {
                 What's the Phone Number
               </label>
               <InputWithIcon
-                icon={Phone}
+                icon={PhoneIcon}
                 name="phone"
                 type="tel"
                 placeholder="Enter your number"
@@ -127,7 +128,7 @@ const Register: React.FC = () => {
                 Where is your location?*
               </label>
               <InputWithIcon
-                icon={Location}
+                icon={LocationIcon}
                 name="location"
                 type="text"
                 required
@@ -146,7 +147,7 @@ const Register: React.FC = () => {
                 What is your business name?*
               </label>
               <InputWithIcon
-                icon={Business}
+                icon={BusinessIcon}
                 name="businessName"
                 type="text"
                 required
@@ -184,7 +185,7 @@ const Register: React.FC = () => {
                 Password*
               </label>
               <InputWithIcon
-                icon={Lock}
+                icon={LockIcon}
                 name="password"
                 type="password"
                 required
@@ -203,7 +204,7 @@ const Register: React.FC = () => {
                 Confirm Password*
               </label>
               <InputWithIcon
-                icon={Lock}
+                icon={LockIcon}
                 name="confirmPassword"
                 type="password"
                 required
