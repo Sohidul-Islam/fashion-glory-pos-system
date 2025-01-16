@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
@@ -11,35 +14,61 @@ import UserIcon from "@/components/icons/UserIcon";
 import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
 import PhoneIcon from "@/components/icons/PhoneIcon";
 import BusinessIcon from "@/components/icons/BusinessIcon";
+import AXIOS from "@/api/network/Axios";
+import { REGISTER_URL } from "@/api/api";
+import Spinner from "@/components/Spinner";
 
 interface RegisterForm {
-  name: string;
+  fullName: string;
   email: string;
-  phone: string;
+  phoneNumber: string;
   location: string;
   businessName: string;
   businessType: string;
   password: string;
-  confirmPassword: string;
+  accountStatus: string;
+  isVerified: boolean;
+  verificationToken: string;
+  isLoggedIn: boolean;
 }
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState<RegisterForm>({
-    name: "",
+    fullName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     location: "",
     businessName: "",
     businessType: "",
     password: "",
-    confirmPassword: "",
+    accountStatus: "active",
+    isVerified: false,
+    verificationToken: "exampleVerificationToken123",
+    isLoggedIn: false,
   });
   const navigate = useNavigate();
 
+  const mutation = useMutation<unknown, Error, RegisterForm>({
+    mutationFn: async (data: RegisterForm) => {
+      return AXIOS.post(REGISTER_URL, data);
+    },
+    onSuccess: (response: any) => {
+      if (response.status) {
+        toast.success("Registration successful!");
+        navigate("/login");
+      } else {
+        toast.error(response.message || "Registration failed");
+      }
+    },
+    onError: (error: Error) => {
+      console.error("Registration failed:", error);
+      toast.error("An error occurred during registration.");
+    },
+  });
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Add your registration logic here
-    navigate("/login");
+    mutation.mutate(formData);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -63,21 +92,21 @@ const Register: React.FC = () => {
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name Field */}
+            {/* Full Name Field */}
             <div className="space-y-2">
               <label
-                htmlFor="name"
+                htmlFor="fullName"
                 className="block text-sm font-medium text-gray-700"
               >
                 What's your name?
               </label>
               <InputWithIcon
                 icon={UserIcon}
-                name="name"
+                name="fullName"
                 type="text"
                 required
-                placeholder="Enter your name"
-                value={formData.name}
+                placeholder="Enter your full name"
+                value={formData.fullName}
                 onChange={handleChange}
               />
             </div>
@@ -101,20 +130,20 @@ const Register: React.FC = () => {
               />
             </div>
 
-            {/* Phone Field */}
+            {/* Phone Number Field */}
             <div className="space-y-2">
               <label
-                htmlFor="phone"
+                htmlFor="phoneNumber"
                 className="block text-sm font-medium text-gray-700"
               >
                 What's the Phone Number
               </label>
               <InputWithIcon
                 icon={PhoneIcon}
-                name="phone"
+                name="phoneNumber"
                 type="tel"
                 placeholder="Enter your number"
-                value={formData.phone}
+                value={formData.phoneNumber}
                 onChange={handleChange}
               />
             </div>
@@ -194,33 +223,19 @@ const Register: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Confirm Password*
-              </label>
-              <InputWithIcon
-                icon={LockIcon}
-                name="confirmPassword"
-                type="password"
-                required
-                placeholder="Confirm password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
           </div>
 
           {/* Register Button */}
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand-primary hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-200"
+            disabled={mutation.isPending}
+            className="w-full flex justify-center items-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand-primary hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Register
+            {mutation.isPending ? (
+              <Spinner size="16px" color="#ffffff" />
+            ) : (
+              "Register"
+            )}
           </button>
 
           {/* Login Link */}

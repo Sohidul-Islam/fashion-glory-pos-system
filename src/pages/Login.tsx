@@ -1,11 +1,12 @@
 import { useState, FormEvent, ChangeEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import LogoSvg from "@/components/icons/LogoSvg";
 import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
 import LockIcon from "@/components/icons/LockIcon";
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
+import Spinner from "@/components/Spinner";
 
 interface Credentials {
   email: string;
@@ -17,13 +18,11 @@ const Login: React.FC = () => {
     email: "",
     password: "",
   });
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     login(credentials.email, credentials.password);
-    navigate("/dashboard");
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -97,9 +96,10 @@ const Login: React.FC = () => {
           {/* Login Button */}
           <button
             type="submit"
+            disabled={isLoading}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand-primary hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-200"
           >
-            Login
+            {isLoading ? <Spinner size="16px" color="#fff" /> : "Login"}
           </button>
 
           {/* Register Link */}
