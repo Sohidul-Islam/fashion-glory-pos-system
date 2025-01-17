@@ -122,6 +122,32 @@ button:focus-visible {
   .animate-pulse {
     animation: pulse 1s ease-in-out infinite;
   }
+
+  .custom-scrollbar {
+    /* For Webkit browsers like Chrome/Safari */
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+
+      &:hover {
+        background: #666;
+      }
+    }
+
+    /* For Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+  }
 }
 
 .loader {

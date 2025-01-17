@@ -1,255 +1,832 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
-import { FaSearch } from "react-icons/fa";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import {
+  FaSearch,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaBox,
+  FaDollarSign,
+  FaPercent,
+  FaBoxes,
+  FaBell,
+  FaImage,
+} from "react-icons/fa";
+import AXIOS from "@/api/network/Axios";
+import {
+  PRODUCT_URL,
+  DELETE_PRODUCT_URL,
+  UPDATE_PRODUCT_URL,
+  CATEGORY_URL,
+  BRANDS_URL,
+  UNITS_URL,
+} from "@/api/api";
+import Spinner from "@/components/Spinner";
+import Modal from "@/components/Modal";
+import InputWithIcon from "@/components/InputWithIcon";
+
+// Interfaces
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+}
+
+interface Unit {
+  id: number;
+  name: string;
+}
+
+interface Product {
+  id: number;
+  code: string | null;
+  sku: string;
+  name: string;
+  description: string;
+  CategoryId: number;
+  BrandId: number;
+  UnitId: number;
+  alertQuantity: number;
+  productImage: string;
+  discountType: string | null;
+  discountAmount: number | null;
+  purchasePrice: number;
+  salesPrice: number;
+  vat: number;
+  price: number;
+  stock: number;
+  status: "active" | "inactive";
+  UserId: number;
+  Category: Category;
+  Brand: Brand;
+  Unit: Unit;
+}
+
+interface ProductFormData {
+  id: number | undefined;
+  code: string | null;
+  sku: string;
+  name: string;
+  description: string;
+  CategoryId: number;
+  BrandId: number;
+  UnitId: number;
+  alertQuantity: number;
+  productImage: string;
+  discountType: string | null;
+  discountAmount: number | null;
+  purchasePrice: number;
+  salesPrice: number;
+  vat: number;
+  price: number;
+  stock: number;
+  status: "active" | "inactive";
+}
 
 const Products: React.FC = () => {
-  // Filter states
+  const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<number | "all">(
+    "all"
+  );
+  const [selectedBrand, setSelectedBrand] = useState<number | "all">("all");
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
     min: 0,
     max: 1000,
   });
 
-  // Categories
-  const categories = [
-    { id: "all", name: "All Categories" },
-    { id: "electronics", name: "Electronics" },
-    { id: "accessories", name: "Accessories" },
-    { id: "gadgets", name: "Gadgets" },
-  ];
+  // Form state
+  const [formData, setFormData] = useState<ProductFormData>({
+    id: undefined,
+    code: null,
+    sku: "",
+    name: "",
+    description: "",
+    CategoryId: 0,
+    BrandId: 0,
+    UnitId: 0,
+    alertQuantity: 0,
+    productImage: "",
+    discountType: null,
+    discountAmount: null,
+    purchasePrice: 0,
+    salesPrice: 0,
+    vat: 0,
+    price: 0,
+    stock: 0,
+    status: "active",
+  });
 
-  // Sample product data with categories
-  const products = [
-    {
-      id: 1,
-      name: "Wireless Headphones",
-      sku: "PRD-1000",
-      price: 99.99,
-      stock: 50,
-      category: "accessories",
-      image:
-        "https://plus.unsplash.com/premium_photo-1679513691474-73102089c117?w=500&h=500&fit=crop",
+  // Queries
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery<
+    Product[]
+  >({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const response = await AXIOS.get(PRODUCT_URL);
+      return response.data;
     },
-    {
-      id: 2,
-      name: "Smart Watch",
-      sku: "PRD-2000",
-      price: 199.99,
-      stock: 30,
-      image:
-        "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500&h=500&fit=crop",
-    },
-    {
-      id: 3,
-      name: "Camera Lens",
-      sku: "PRD-3000",
-      price: 299.99,
-      stock: 20,
-      image:
-        "https://images.unsplash.com/photo-1515343480029-43cdfe6b6aae?w=500&h=500&fit=crop",
-    },
-    {
-      id: 4,
-      name: "Gaming Console",
-      sku: "PRD-4000",
-      price: 399.99,
-      stock: 15,
-      image:
-        "https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=500&h=500&fit=crop",
-    },
-    {
-      id: 5,
-      name: "Smartphone",
-      sku: "PRD-5000",
-      price: 699.99,
-      stock: 25,
-      image:
-        "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=500&fit=crop",
-    },
-    {
-      id: 6,
-      name: "Laptop",
-      sku: "PRD-6000",
-      price: 999.99,
-      stock: 10,
-      image:
-        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
-    },
-  ];
+  });
 
-  // Filter products based on search, category, and price range
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await AXIOS.get(CATEGORY_URL);
+      return response.data;
+    },
+  });
+
+  const { data: brands = [] } = useQuery<Brand[]>({
+    queryKey: ["brands"],
+    queryFn: async () => {
+      const response = await AXIOS.get(BRANDS_URL);
+      return response.data;
+    },
+  });
+
+  const { data: units = [] } = useQuery<Unit[]>({
+    queryKey: ["units"],
+    queryFn: async () => {
+      const response = await AXIOS.get(UNITS_URL);
+      return response.data;
+    },
+  });
+
+  // Mutations
+  const createMutation = useMutation<any, Error, ProductFormData>({
+    mutationFn: (data: ProductFormData) => AXIOS.post(PRODUCT_URL, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product created successfully");
+      setIsModalOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to create product");
+    },
+  });
+
+  const updateMutation = useMutation<
+    any,
+    Error,
+    { id: number; updates: ProductFormData }
+  >({
+    mutationFn: (data) =>
+      AXIOS.post(`${UPDATE_PRODUCT_URL}/${data.id}`, data.updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product updated successfully");
+      setIsModalOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to update product");
+    },
+  });
+
+  const deleteMutation = useMutation<any, Error, number>({
+    mutationFn: (id: number) => AXIOS.post(`${DELETE_PRODUCT_URL}/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to delete product");
+    },
+  });
+
+  // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch = product.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory =
-        selectedCategory === "all" || product.category === selectedCategory;
+        selectedCategory === "all" || product.CategoryId === selectedCategory;
+      const matchesBrand =
+        selectedBrand === "all" || product.BrandId === selectedBrand;
       const matchesPrice =
         product.price >= priceRange.min && product.price <= priceRange.max;
 
-      return matchesSearch && matchesCategory && matchesPrice;
+      return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
     });
-  }, [products, searchQuery, selectedCategory, priceRange]);
+  }, [products, searchQuery, selectedCategory, selectedBrand, priceRange]);
 
+  // Handlers
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.id) {
+      updateMutation.mutate({
+        id: formData.id,
+        updates: formData,
+      });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setFormData({
+      id: product.id,
+      code: product.code,
+      sku: product.sku,
+      name: product.name,
+      description: product.description,
+      CategoryId: product.CategoryId,
+      BrandId: product.BrandId,
+      UnitId: product.UnitId,
+      alertQuantity: product.alertQuantity,
+      productImage: product.productImage,
+      discountType: product.discountType,
+      discountAmount: product.discountAmount,
+      purchasePrice: product.purchasePrice,
+      salesPrice: product.salesPrice,
+      vat: product.vat,
+      price: product.price,
+      stock: product.stock,
+      status: product.status,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id: undefined,
+      code: null,
+      sku: "",
+      name: "",
+      description: "",
+      CategoryId: 0,
+      BrandId: 0,
+      UnitId: 0,
+      alertQuantity: 0,
+      productImage: "",
+      discountType: null,
+      discountAmount: null,
+      purchasePrice: 0,
+      salesPrice: 0,
+      vat: 0,
+      price: 0,
+      stock: 0,
+      status: "active",
+    });
+  };
+
+  // Keep your existing return JSX but update the products mapping
   return (
     <div className="bg-white rounded-lg shadow p-6">
+      {/* Your existing filter UI */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Products</h1>
-        <button className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover">
-          Add Product
+        <div className="flex-1 max-w-sm">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full pl-10 pr-4 py-2 border rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="ml-4 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover flex items-center gap-2"
+        >
+          <FaPlus /> Add Product
         </button>
       </div>
 
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-              />
-            </div>
-          </div>
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <select
+          value={selectedCategory}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedCategory(value === "all" ? "all" : Number(value));
+          }}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="all">All Categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
 
-          <div className="w-full md:w-48">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <select
+          value={selectedBrand}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedBrand(value === "all" ? "all" : Number(value));
+          }}
+          className="border rounded-lg px-3 py-2"
+        >
+          <option value="all">All Brands</option>
+          {brands.map((brand) => (
+            <option key={brand.id} value={brand.id}>
+              {brand.name}
+            </option>
+          ))}
+        </select>
 
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <span className="text-sm text-gray-600 whitespace-nowrap">
-            Price Range:
-          </span>
-          <div className="flex-1 flex items-center gap-4">
-            <input
-              type="number"
-              value={priceRange.min}
-              onChange={(e) =>
-                setPriceRange((prev) => ({
-                  ...prev,
-                  min: Number(e.target.value),
-                }))
-              }
-              min="0"
-              placeholder="Min"
-              className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-            <span>-</span>
-            <input
-              type="number"
-              value={priceRange.max}
-              onChange={(e) =>
-                setPriceRange((prev) => ({
-                  ...prev,
-                  max: Number(e.target.value),
-                }))
-              }
-              min="0"
-              placeholder="Max"
-              className="w-24 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {searchQuery && (
-            <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm">
-              Search: {searchQuery}
-              <button
-                onClick={() => setSearchQuery("")}
-                className="ml-2 hover:text-brand-hover"
-              >
-                ×
-              </button>
-            </span>
-          )}
-          {selectedCategory !== "all" && (
-            <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm">
-              Category:{" "}
-              {categories.find((c) => c.id === selectedCategory)?.name}
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className="ml-2 hover:text-brand-hover"
-              >
-                ×
-              </button>
-            </span>
-          )}
-          {(priceRange.min > 0 || priceRange.max < 1000) && (
-            <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-sm">
-              Price: ${priceRange.min} - ${priceRange.max}
-              <button
-                onClick={() => setPriceRange({ min: 0, max: 1000 })}
-                className="ml-2 hover:text-brand-hover"
-              >
-                ×
-              </button>
-            </span>
-          )}
+        {/* Price Range */}
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="Min"
+            value={priceRange.min}
+            onChange={(e) =>
+              setPriceRange({ ...priceRange, min: Number(e.target.value) })
+            }
+            className="border rounded-lg px-3 py-2 w-24"
+          />
+          <span>-</span>
+          <input
+            type="number"
+            placeholder="Max"
+            value={priceRange.max}
+            onChange={(e) =>
+              setPriceRange({ ...priceRange, max: Number(e.target.value) })
+            }
+            className="border rounded-lg px-3 py-2 w-24"
+          />
         </div>
       </div>
 
+      {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.length > 0 ? (
+        {isLoadingProducts ? (
+          <div className="col-span-full flex justify-center py-8">
+            <Spinner color="#32cd32" size="40px" />
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="col-span-full text-center py-8 text-gray-500">
+            No products found
+          </div>
+        ) : (
           filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="border rounded-lg overflow-hidden group hover:shadow-lg transition-shadow duration-200"
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group"
             >
-              <div className="aspect-square relative overflow-hidden bg-gray-100">
+              {/* Product Image Section */}
+              <div className="relative h-56">
                 <img
-                  src={product.image}
-                  alt={product.name}
-                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-200"
+                  src={product?.productImage}
+                  alt={product?.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Status Badge */}
+                <span
+                  className={`absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-full shadow-lg ${
+                    product.status === "active"
+                      ? "bg-green-500 text-white"
+                      : "bg-red-500 text-white"
+                  }`}
+                >
+                  {product?.status}
+                </span>
+
+                {/* Quick Action Buttons */}
+                <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 shadow-lg transition-colors"
+                  >
+                    <FaEdit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors"
+                  >
+                    <FaTrash className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <div className="p-4 space-y-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      {product.name}
-                    </h3>
-                    <p className="text-gray-500 text-sm">SKU: {product.sku}</p>
-                  </div>
-                  <p className="text-brand-primary font-semibold">
-                    ${product.price}
+              {/* Product Details Section */}
+              <div className="p-5">
+                {/* Header */}
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-1 line-clamp-1">
+                    {product?.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
+                    <FaBox className="w-4 h-4" />
+                    {product.sku}
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-sm text-gray-600">
-                    Stock: {product.stock}
-                  </span>
-                  <button className="px-3 py-1 text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors duration-200">
-                    Edit
-                  </button>
+                {/* Description */}
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                  {product?.description}
+                </p>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                  <div className="bg-gray-50 p-2 rounded-lg">
+                    <span className="text-gray-500 block text-xs">
+                      Category
+                    </span>
+                    <span className="font-medium text-gray-800">
+                      {product?.Category?.name}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded-lg">
+                    <span className="text-gray-500 block text-xs">Brand</span>
+                    <span className="font-medium text-gray-800">
+                      {product?.Brand?.name}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded-lg">
+                    <span className="text-gray-500 block text-xs">Unit</span>
+                    <span className="font-medium text-gray-800">
+                      {product?.Unit?.name}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded-lg">
+                    <span className="text-gray-500 block text-xs">Stock</span>
+                    <span
+                      className={`font-medium ${
+                        product.stock <= product.alertQuantity
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {product?.stock}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Price Section */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div>
+                    <span className="text-xs text-gray-500">Sales Price</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-brand-primary">
+                        ${Number(product?.price || 0)?.toFixed(2)}
+                      </span>
+                      {product.discountAmount && (
+                        <span className="text-sm text-red-500 line-through">
+                          $
+                          {Number(
+                            product.price + product.discountAmount || 0
+                          ).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-500">VAT</span>
+                    <p className="text-sm font-medium text-gray-600">
+                      {product.vat}%
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           ))
-        ) : (
-          <div className="col-span-full text-center py-8 text-gray-500">
-            No products found matching your criteria
-          </div>
         )}
       </div>
+
+      {/* Product Form Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        className="!max-w-[80vw]"
+        onClose={() => {
+          setIsModalOpen(false);
+          resetForm();
+        }}
+        title={formData.id ? "Edit Product" : "Add Product"}
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* SKU */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                SKU*
+              </label>
+              <InputWithIcon
+                icon={FaBox}
+                name="sku"
+                type="text"
+                required
+                placeholder="Enter SKU"
+                value={formData.sku}
+                onChange={(e) =>
+                  setFormData({ ...formData, sku: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name*
+              </label>
+              <InputWithIcon
+                icon={FaBox}
+                name="name"
+                type="text"
+                required
+                placeholder="Enter product name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Description */}
+            <div className="col-span-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description*
+              </label>
+              <textarea
+                name="description"
+                required
+                placeholder="Enter product description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+                rows={3}
+              />
+            </div>
+
+            {/* Category, Brand, Unit */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category*
+              </label>
+              <select
+                value={formData.CategoryId || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    CategoryId: e.target.value ? Number(e.target.value) : 0,
+                  })
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Brand*
+              </label>
+              <select
+                value={formData.BrandId || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    BrandId: e.target.value ? Number(e.target.value) : 0,
+                  })
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+                required
+              >
+                <option value="">Select Brand</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit*
+              </label>
+              <select
+                value={formData.UnitId || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    UnitId: e.target.value ? Number(e.target.value) : 0,
+                  })
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+                required
+              >
+                <option value="">Select Unit</option>
+                {units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Image URL */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Product Image URL*
+              </label>
+              <InputWithIcon
+                icon={FaImage}
+                name="productImage"
+                type="text"
+                required
+                placeholder="Enter image URL"
+                value={formData.productImage}
+                onChange={(e) =>
+                  setFormData({ ...formData, productImage: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Prices */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Purchase Price*
+              </label>
+              <InputWithIcon
+                icon={FaDollarSign}
+                name="purchasePrice"
+                type="number"
+                step="0.01"
+                required
+                placeholder="Enter purchase price"
+                value={formData.purchasePrice?.toString()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    purchasePrice: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sales Price*
+              </label>
+              <InputWithIcon
+                icon={FaDollarSign}
+                name="salesPrice"
+                type="number"
+                step="0.01"
+                required
+                placeholder="Enter sales price"
+                value={formData.salesPrice?.toString()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    salesPrice: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                VAT (%)*
+              </label>
+              <InputWithIcon
+                icon={FaPercent}
+                name="vat"
+                type="number"
+                step="0.01"
+                required
+                placeholder="Enter VAT"
+                value={formData.vat?.toString()}
+                onChange={(e) =>
+                  setFormData({ ...formData, vat: Number(e.target.value) })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Final Price*
+              </label>
+              <InputWithIcon
+                icon={FaDollarSign}
+                name="price"
+                type="number"
+                step="0.01"
+                required
+                placeholder="Enter final price"
+                value={formData.price?.toString()}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: Number(e.target.value) })
+                }
+              />
+            </div>
+
+            {/* Stock */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock*
+              </label>
+              <InputWithIcon
+                icon={FaBoxes}
+                name="stock"
+                type="number"
+                required
+                placeholder="Enter stock quantity"
+                value={formData.stock?.toString()}
+                onChange={(e) =>
+                  setFormData({ ...formData, stock: Number(e.target.value) })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Alert Quantity
+              </label>
+              <InputWithIcon
+                icon={FaBell}
+                name="alertQuantity"
+                type="number"
+                placeholder="Enter alert quantity"
+                value={formData.alertQuantity?.toString()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    alertQuantity: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status*
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as "active" | "inactive",
+                  })
+                }
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+                required
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {createMutation.isPending || updateMutation.isPending ? (
+                <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
+              ) : (
+                <>{formData.id ? "Update" : "Create"} Product</>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
