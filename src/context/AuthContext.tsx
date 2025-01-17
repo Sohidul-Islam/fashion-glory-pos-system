@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import {
   createContext,
   useContext,
@@ -8,13 +8,15 @@ import {
   ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import AXIOS from "../api/network/Axios";
-import { LOGIN_URL } from "../api/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { useMutation } from "@tanstack/react-query";
+import AXIOS from "../api/network/Axios";
+import { LOGIN_URL, PROFILE_URL } from "../api/api";
+import { getCookiesAsObject } from "@/utils/cookies";
 
 interface User {
   email: string;
+  // Add other user properties as needed
 }
 
 interface AuthContextType {
@@ -22,6 +24,7 @@ interface AuthContextType {
   login: (email: string, password: string) => void;
   logout: () => void;
   isLoading: boolean;
+  isLoadingProfile: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,41 +33,83 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
 
-  // Check local storage on initial load
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
+  // Get profile query
+  const {
+    data: profileData,
+    isLoading,
+    isSuccess,
+    error,
+  } = useQuery({
+    queryKey: [PROFILE_URL, { email: user?.email }],
+    queryFn: async () => {
+      const { access_token } = getCookiesAsObject();
+      if (!access_token || !user?.email) {
+        navigate("/login");
+        setUser(null);
+        localStorage.removeItem("user");
+        return null;
+      }
 
+      const response = await AXIOS.get(PROFILE_URL, {
+        params: {
+          email: user?.email,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!user?.email,
+  });
+
+  useEffect(() => {
+    if (error) {
+      setUser(null);
+      localStorage.removeItem("user");
+      navigate("/login");
+    }
+  }, [error]);
+
+  // Update user when profile data changes
+  useEffect(() => {
+    console.log({ profileData, isSuccess });
+    if (isSuccess) {
+      if (profileData) {
+        setUser(profileData);
+        localStorage.setItem("user", JSON.stringify(profileData));
+      }
+    }
+
+    setIsInitializing(false);
+  }, [profileData, isSuccess]);
+
+  // Login mutation
   const loginMutation = useMutation({
-    mutationFn: (credentials: { email: string; password: string }) =>
-      AXIOS.post(LOGIN_URL, credentials),
-    onSuccess: (data: any) => {
-      if (data.status) {
-        toast.success(data.message);
-        const { user, token } = data.data;
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const response = await AXIOS.post(LOGIN_URL, credentials);
+      return response;
+    },
+    onSuccess: (response: any) => {
+      if (response.status) {
+        const { user, token } = response.data;
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         document.cookie = `access_token=${token}; path=/`;
+        toast.success("Login successful!");
         navigate("/dashboard");
       } else {
-        toast.error(data.message);
+        toast.error(response.message || "Login failed");
       }
+    },
+    onError: (error: any) => {
+      console.error("Login error:", error);
+      toast.error(error?.message || "Login failed");
     },
   });
 
-  const login = async (email: string, password: string) => {
-    try {
-      loginMutation.mutate({ email, password });
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-    }
+  const login = (email: string, password: string) => {
+    loginMutation.mutate({ email, password });
   };
 
   const logout = () => {
@@ -75,11 +120,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     navigate("/login");
   };
 
+  // Check local storage on initial load
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setIsInitializing(false);
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isLoading: loginMutation.isPending }}
+      value={{
+        user,
+        login,
+        logout,
+        isLoadingProfile: isLoading,
+        isLoading: loginMutation.isPending || isInitializing,
+      }}
     >
-      {!isLoading && children}
+      {!isInitializing && children}
     </AuthContext.Provider>
   );
 };

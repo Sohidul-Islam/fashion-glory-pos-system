@@ -8,6 +8,8 @@ import {
   FaCog,
   FaFileInvoice,
   FaTruck,
+  FaTags,
+  FaRuler,
 } from "react-icons/fa";
 
 export const menuItems = [
@@ -50,10 +52,28 @@ export const menuItems = [
         icon: <FaBoxOpen className="w-5 h-5" />,
       },
       {
+        id: "categories",
+        title: "Categories",
+        path: "/inventory/categories",
+        icon: <FaTags className="w-5 h-5" />,
+      },
+      {
         id: "suppliers",
         title: "Suppliers",
         path: "/inventory/suppliers",
         icon: <FaTruck className="w-5 h-5" />,
+      },
+      {
+        id: "brands",
+        title: "Brands",
+        path: "/inventory/brands",
+        icon: <FaTags className="w-5 h-5" />,
+      },
+      {
+        id: "units",
+        title: "Units",
+        path: "/inventory/units",
+        icon: <FaRuler className="w-5 h-5" />,
       },
     ],
   },

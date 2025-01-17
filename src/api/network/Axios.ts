@@ -55,16 +55,18 @@ AXIOS.interceptors.response.use(
      * Add logic for any error from backend
      */
     if (
-      error?.response?.data?.success === false &&
-      (error?.response?.data?.message === "Error!Token was not provided." ||
-        error?.response?.data?.message === "Invalid Token.")
+      error?.response?.data?.status === false &&
+      (error?.response?.data?.message === "No token provided" ||
+        error?.response?.data?.message === "Invalid or expired token" ||
+        error?.response?.data?.message === "Authentication failed" ||
+        error?.response?.data?.message === "User not is not valid")
     ) {
       toast.error(error?.response?.data?.message);
-      window.location.href = "/login";
+      // window.location.href = "/login";
     }
 
     console.log("api error:", error);
-    return Promise.reject(error);
+    return Promise.reject(error?.response?.data);
   }
 );
 

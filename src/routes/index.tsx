@@ -13,8 +13,22 @@ import Register from "../pages/Register";
 import Purchase from "../pages/Purchase";
 import Layout from "@/components/Layout";
 import Customers from "@/pages/Customers";
+import { useAuth } from "@/context/AuthContext";
+import Spinner from "@/components/Spinner";
+import Categories from "../pages/inventory/Categories";
+import Brands from "../pages/inventory/Brands";
+import Units from "../pages/inventory/Units";
 
 const AppRoutes = () => {
+  const { isLoadingProfile } = useAuth();
+
+  if (isLoadingProfile) {
+    return (
+      <div className="w-full flex justify-center items-center h-screen bg-white">
+        <Spinner color="#32cd32" size="40px" />
+      </div>
+    );
+  }
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -41,6 +55,9 @@ const AppRoutes = () => {
         <Route path="inventory">
           <Route path="products" element={<Products />} />
           <Route path="suppliers" element={<Suppliers />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="brands" element={<Brands />} />
+          <Route path="units" element={<Units />} />
         </Route>
 
         {/* Other Routes */}
