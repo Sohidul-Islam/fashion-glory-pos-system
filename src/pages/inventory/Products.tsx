@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,8 @@ import {
   FaPercent,
   FaBoxes,
   FaBell,
-  FaImage,
+  FaCloudUploadAlt,
+  FaTimes,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
@@ -26,6 +28,7 @@ import {
 import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import InputWithIcon from "@/components/InputWithIcon";
+import { successToast, uploadFile } from "@/utils/utils";
 
 // Interfaces
 interface Category {
@@ -87,6 +90,7 @@ interface ProductFormData {
   price: number;
   stock: number;
   status: "active" | "inactive";
+  imageFile?: File | null;
 }
 
 const Products: React.FC = () => {
@@ -123,6 +127,9 @@ const Products: React.FC = () => {
     stock: 0,
     status: "active",
   });
+
+  // Additional state
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   // Queries
   const { data: products = [], isLoading: isLoadingProducts } = useQuery<
@@ -220,16 +227,78 @@ const Products: React.FC = () => {
   }, [products, searchQuery, selectedCategory, selectedBrand, priceRange]);
 
   // Handlers
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.id) {
-      updateMutation.mutate({
-        id: formData.id,
-        updates: formData,
-      });
-    } else {
-      createMutation.mutate(formData);
+    try {
+      let imageUrl = formData.productImage;
+
+      // Upload image if new file is selected
+      if (formData.imageFile) {
+        imageUrl = await uploadFile(formData.imageFile);
+        if (!imageUrl) {
+          successToast("Failed to upload image", "error");
+          return;
+        }
+      }
+
+      const submitData = {
+        ...formData,
+        productImage: imageUrl,
+      };
+
+      if (formData.id) {
+        updateMutation.mutate({
+          id: formData.id,
+          updates: submitData,
+        });
+      } else {
+        createMutation.mutate(submitData);
+      }
+    } catch (error) {
+      successToast("Failed to upload image", "error");
     }
+  };
+
+  const handleInputChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
+      | React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prevFormData) => {
+      const updatedData = { ...prevFormData, [name]: value };
+
+      // Recalculate prices when related fields change
+      if (
+        name === "salesPrice" ||
+        name === "discountType" ||
+        name === "discountAmount" ||
+        name === "vat"
+      ) {
+        const salesPrice = Number(updatedData.salesPrice || 0);
+        const discountType = updatedData.discountType;
+        const discountAmount = Number(updatedData.discountAmount || 0);
+        const vat = Number(updatedData.vat || 0);
+
+        let discountedPrice = salesPrice;
+
+        // Apply discount
+        if (discountType === "percentage") {
+          discountedPrice -= (salesPrice * discountAmount) / 100;
+        } else if (discountType === "amount") {
+          discountedPrice -= discountAmount;
+        }
+
+        // Apply VAT
+        const finalPrice = discountedPrice + (discountedPrice * vat) / 100;
+
+        updatedData.price = Math.max(finalPrice, 0); // Ensure price is not negative
+      }
+
+      return updatedData;
+    });
   };
 
   const handleEdit = (product: Product) => {
@@ -243,7 +312,7 @@ const Products: React.FC = () => {
       BrandId: product.BrandId,
       UnitId: product.UnitId,
       alertQuantity: product.alertQuantity,
-      productImage: product.productImage,
+      productImage: product.productImage || "",
       discountType: product.discountType,
       discountAmount: product.discountAmount,
       purchasePrice: product.purchasePrice,
@@ -253,8 +322,11 @@ const Products: React.FC = () => {
       stock: product.stock,
       status: product.status,
     });
+    setImagePreview("");
     setIsModalOpen(true);
   };
+
+  console.log({ formData, imagePreview });
 
   const handleDelete = (id: number) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
@@ -283,6 +355,18 @@ const Products: React.FC = () => {
       stock: 0,
       status: "active",
     });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, imageFile: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Keep your existing return JSX but update the products mapping
@@ -509,7 +593,7 @@ const Products: React.FC = () => {
       {/* Product Form Modal */}
       <Modal
         isOpen={isModalOpen}
-        className="!max-w-[80vw]"
+        className="lg:!max-w-[80vw] !max-w-[95vw]"
         onClose={() => {
           setIsModalOpen(false);
           resetForm();
@@ -530,9 +614,7 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter SKU"
                 value={formData.sku}
-                onChange={(e) =>
-                  setFormData({ ...formData, sku: e.target.value })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -548,25 +630,20 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter product name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
             {/* Description */}
             <div className="col-span-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description*
+                Description
               </label>
               <textarea
                 name="description"
-                required
                 placeholder="Enter product description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                 rows={3}
               />
@@ -645,24 +722,6 @@ const Products: React.FC = () => {
               </select>
             </div>
 
-            {/* Image URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Product Image URL*
-              </label>
-              <InputWithIcon
-                icon={FaImage}
-                name="productImage"
-                type="text"
-                required
-                placeholder="Enter image URL"
-                value={formData.productImage}
-                onChange={(e) =>
-                  setFormData({ ...formData, productImage: e.target.value })
-                }
-              />
-            </div>
-
             {/* Prices */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -676,12 +735,7 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter purchase price"
                 value={formData.purchasePrice?.toString()}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    purchasePrice: Number(e.target.value),
-                  })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -697,14 +751,44 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter sales price"
                 value={formData.salesPrice?.toString()}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    salesPrice: Number(e.target.value),
-                  })
-                }
+                onChange={handleInputChange}
               />
             </div>
+
+            {/* Discount */}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Discount Type
+              </label>
+              <select
+                value={formData.discountType || ""}
+                onChange={handleInputChange}
+                name="discountType"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
+              >
+                <option value="">Select Discount Type</option>
+                <option value="percentage">Percentage</option>
+                <option value="amount">Amount</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Discount Amount
+              </label>
+              <InputWithIcon
+                icon={FaDollarSign}
+                name="discountAmount"
+                type="number"
+                step="0.01"
+                placeholder="Enter discount amount"
+                value={formData.discountAmount?.toString() || ""}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            {/* VAT */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -718,9 +802,7 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter VAT"
                 value={formData.vat?.toString()}
-                onChange={(e) =>
-                  setFormData({ ...formData, vat: Number(e.target.value) })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -736,9 +818,7 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter final price"
                 value={formData.price?.toString()}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: Number(e.target.value) })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -754,9 +834,7 @@ const Products: React.FC = () => {
                 required
                 placeholder="Enter stock quantity"
                 value={formData.stock?.toString()}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock: Number(e.target.value) })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -770,12 +848,7 @@ const Products: React.FC = () => {
                 type="number"
                 placeholder="Enter alert quantity"
                 value={formData.alertQuantity?.toString()}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    alertQuantity: Number(e.target.value),
-                  })
-                }
+                onChange={handleInputChange}
               />
             </div>
 
@@ -786,12 +859,7 @@ const Products: React.FC = () => {
               </label>
               <select
                 value={formData.status}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    status: e.target.value as "active" | "inactive",
-                  })
-                }
+                onChange={handleInputChange}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                 required
               >
@@ -800,7 +868,65 @@ const Products: React.FC = () => {
               </select>
             </div>
           </div>
-
+          {/* Image */}
+          <div className="col-span-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product Image
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative hover:border-brand-primary transition-colors">
+              <div className="space-y-1 text-center">
+                {imagePreview || formData.productImage ? (
+                  <div className="relative group">
+                    <img
+                      src={imagePreview || formData.productImage}
+                      alt="Preview"
+                      className="mx-auto h-64 w-auto rounded-md object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            imageFile: null,
+                            productImage: "",
+                          }));
+                          setImagePreview("");
+                        }}
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <FaCloudUploadAlt className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="product-image"
+                        className="relative cursor-pointer rounded-md font-medium text-brand-primary hover:text-brand-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary"
+                      >
+                        <span>Upload a file</span>
+                        <input
+                          id="product-image"
+                          name="product-image"
+                          type="file"
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
           {/* Form Actions */}
           <div className="flex justify-end gap-4 mt-6">
             <button
