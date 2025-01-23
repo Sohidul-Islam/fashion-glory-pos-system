@@ -232,6 +232,11 @@ const Products: React.FC = () => {
     try {
       let imageUrl = formData.productImage;
 
+      if (formData?.salesPrice < formData?.purchasePrice) {
+        successToast("Sales price cannot be less than purchase price", "error");
+        return;
+      }
+
       // Upload image if new file is selected
       if (formData.imageFile) {
         imageUrl = await uploadFile(formData.imageFile);
@@ -567,12 +572,16 @@ const Products: React.FC = () => {
                       <span className="text-2xl font-bold text-brand-primary">
                         ${Number(product?.price || 0)?.toFixed(2)}
                       </span>
-                      {product.discountAmount && (
+                      {product?.discountAmount && (
                         <span className="text-sm text-red-500 line-through">
                           $
-                          {Number(
-                            product.price + product.discountAmount || 0
-                          ).toFixed(2)}
+                          {(() => {
+                            const salesPrice = Number(product?.salesPrice) || 0; // Ensure salesPrice is a number
+                            const vatPercentage = Number(product?.vat) || 0; // Ensure VAT is a number
+                            const vatAmount =
+                              (salesPrice * vatPercentage) / 100; // Calculate VAT
+                            return (salesPrice + vatAmount).toFixed(2); // Add VAT to salesPrice and format
+                          })()}
                         </span>
                       )}
                     </div>
