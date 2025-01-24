@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   FaSearch,
   FaShoppingCart,
@@ -17,8 +17,14 @@ import AXIOS from "@/api/network/Axios";
 import { PRODUCT_URL, CATEGORY_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import ScrollButton from "@/components/ScrollButton";
-
+import Invoice from "@/components/Invoice";
 import { successToast } from "@/utils/utils";
+import {
+  generateOrderId,
+  generateVerificationCode,
+  getExpiryDate,
+} from "@/utils/utils";
+import Modal from "@/components/Modal";
 
 interface Product {
   id: number;
@@ -37,6 +43,22 @@ interface CartItem extends Product {
   quantity: number;
 }
 
+interface OrderData {
+  orderId: string;
+  date: string;
+  customer: {
+    name: string;
+    phone: string;
+  };
+  items: CartItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  paymentMethod: "cash" | "card";
+  verificationCode: string;
+  expiryDate: string;
+}
+
 const POS: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -46,6 +68,8 @@ const POS: React.FC = () => {
     phone: "",
   });
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
 
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
@@ -183,6 +207,58 @@ const POS: React.FC = () => {
       }
     };
   }, []);
+
+  // Add this mutation
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: OrderData) => {
+      const response = await AXIOS.post("/orders", orderData);
+      return response.data;
+    },
+    onSuccess: () => {
+      successToast("Order created successfully!", "success");
+    },
+    onError: (error: any) => {
+      successToast(error?.message || "Failed to create order", "error");
+    },
+  });
+
+  // Add these handlers
+  const handlePayment = (method: "cash" | "card") => {
+    if (cart.length === 0) {
+      successToast("Cart is empty!", "error");
+      return;
+    }
+
+    const verificationCode = generateVerificationCode();
+    const orderData: OrderData = {
+      orderId: generateOrderId(),
+      date: new Date().toLocaleString(),
+      customer: customerInfo,
+      items: cart,
+      subtotal,
+      tax,
+      total,
+      paymentMethod: method,
+      verificationCode,
+      expiryDate: getExpiryDate(new Date().toLocaleString()),
+    };
+
+    createOrderMutation.mutate(orderData);
+    setCurrentOrder(orderData);
+    setShowInvoice(true);
+  };
+
+  const handlePrintInvoice = () => {
+    const printContent = document.getElementById("invoice-print");
+    const originalContent = document.body.innerHTML;
+
+    if (printContent) {
+      document.body.innerHTML = printContent.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContent;
+      window.location.reload(); // Reload to restore React app
+    }
+  };
 
   if (isLoadingProducts || isLoadingCategories) {
     return (
@@ -420,11 +496,19 @@ const POS: React.FC = () => {
 
           {/* Payment Methods */}
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover">
+            <button
+              onClick={() => handlePayment("card")}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover"
+              disabled={createOrderMutation.isPending}
+            >
               <FaCreditCard />
               <span>Card</span>
             </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+            <button
+              onClick={() => handlePayment("cash")}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              disabled={createOrderMutation.isPending}
+            >
               <FaMoneyBill />
               <span>Cash</span>
             </button>
@@ -453,6 +537,22 @@ const POS: React.FC = () => {
           )}
         </div>
       </button>
+
+      <Modal
+        title="Invoice"
+        isOpen={showInvoice}
+        onClose={() => setShowInvoice(false)}
+      >
+        <Invoice
+          orderData={currentOrder}
+          onClose={() => {
+            setShowInvoice(false);
+            setCart([]);
+            setCustomerInfo({ name: "", phone: "" });
+          }}
+          onPrint={handlePrintInvoice}
+        />
+      </Modal>
     </div>
   );
 };

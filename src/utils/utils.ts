@@ -34,3 +34,26 @@ export const uploadFile = async (file: File) => {
     return null;
   }
 };
+
+export const generateOrderId = () => {
+  const timestamp = new Date().getTime().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `INV${timestamp}${random}`;
+};
+
+export const generateVerificationCode = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
+export const getExpiryDate = (date: string) => {
+  const purchaseDate = new Date(date);
+  purchaseDate.setDate(purchaseDate.getDate() + 30);
+  return purchaseDate.toLocaleString();
+};
