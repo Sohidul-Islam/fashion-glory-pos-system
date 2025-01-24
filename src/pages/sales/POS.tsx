@@ -1,4 +1,6 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   FaSearch,
   FaShoppingCart,
@@ -10,15 +12,26 @@ import {
   FaMoneyBill,
   FaQrcode,
   FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
+import AXIOS from "@/api/network/Axios";
+import { PRODUCT_URL, CATEGORY_URL } from "@/api/api";
+import Spinner from "@/components/Spinner";
+
+import { successToast } from "@/utils/utils";
 
 interface Product {
   id: number;
   name: string;
   price: number;
-  image: string;
-  category: string;
+  productImage: string;
+  CategoryId: number;
   stock: number;
+  Category: {
+    id: number;
+    name: string;
+  };
 }
 
 interface CartItem extends Product {
@@ -35,185 +48,55 @@ const POS: React.FC = () => {
   });
   const [showMobileCart, setShowMobileCart] = useState(false);
 
-  // Sample categories
-  const categories = [
-    { id: "all", name: "All" },
-    { id: "drinks", name: "Drinks" },
-    { id: "food", name: "Food" },
-    { id: "snacks", name: "Snacks" },
-    { id: "electronics", name: "Electronics" },
-  ];
-
-  // Sample products with more items per category
-  const products: Product[] = [
-    // Drinks Category
-    {
-      id: 1,
-      name: "Coffee",
-      price: 3,
-      image:
-        "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=100&h=100&fit=crop",
-      category: "drinks",
-      stock: 50,
-    },
-    {
-      id: 2,
-      name: "Green Tea",
-      price: 2.5,
-      image:
-        "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?w=100&h=100&fit=crop",
-      category: "drinks",
-      stock: 45,
-    },
-    {
-      id: 3,
-      name: "Fresh Orange Juice",
-      price: 4,
-      image:
-        "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=100&h=100&fit=crop",
-      category: "drinks",
-      stock: 30,
-    },
-    {
-      id: 4,
-      name: "Smoothie",
-      price: 4.5,
-      image:
-        "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=100&h=100&fit=crop",
-      category: "drinks",
-      stock: 25,
-    },
-
-    // Food Category
-    {
-      id: 5,
-      name: "Chicken Rice",
-      price: 8.5,
-      image:
-        "https://images.unsplash.com/photo-1562967914-608f82629710?w=100&h=100&fit=crop",
-      category: "food",
-      stock: 20,
-    },
-    {
-      id: 6,
-      name: "Pasta Carbonara",
-      price: 9.99,
-      image:
-        "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=100&h=100&fit=crop",
-      category: "food",
-      stock: 15,
-    },
-    {
-      id: 7,
-      name: "Caesar Salad",
-      price: 7.5,
-      image:
-        "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=100&h=100&fit=crop",
-      category: "food",
-      stock: 25,
-    },
-    {
-      id: 8,
-      name: "Fish & Chips",
-      price: 10.99,
-      image:
-        "https://images.unsplash.com/photo-1579208575657-c595a05383b7?w=100&h=100&fit=crop",
-      category: "food",
-      stock: 18,
-    },
-
-    // Snacks Category
-    {
-      id: 9,
-      name: "Burger",
-      price: 6.99,
-      image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100&h=100&fit=crop",
-      category: "snacks",
-      stock: 30,
-    },
-    {
-      id: 10,
-      name: "French Fries",
-      price: 3.99,
-      image:
-        "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=100&h=100&fit=crop",
-      category: "snacks",
-      stock: 40,
-    },
-    {
-      id: 11,
-      name: "Chicken Wings",
-      price: 7.99,
-      image:
-        "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=100&h=100&fit=crop",
-      category: "snacks",
-      stock: 35,
-    },
-    {
-      id: 12,
-      name: "Nachos",
-      price: 5.99,
-      image:
-        "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=100&h=100&fit=crop",
-      category: "snacks",
-      stock: 28,
-    },
-
-    // Electronics Category
-    {
-      id: 13,
-      name: "Wireless Earbuds",
-      price: 89.99,
-      image:
-        "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=100&h=100&fit=crop",
-      category: "electronics",
-      stock: 15,
-    },
-    {
-      id: 14,
-      name: "Power Bank",
-      price: 29.99,
-      image:
-        "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=100&h=100&fit=crop",
-      category: "electronics",
-      stock: 20,
-    },
-    {
-      id: 15,
-      name: "Phone Charger",
-      price: 19.99,
-      image:
-        "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=100&h=100&fit=crop",
-      category: "electronics",
-      stock: 30,
-    },
-    {
-      id: 16,
-      name: "Phone Case",
-      price: 14.99,
-      image:
-        "https://images.unsplash.com/photo-1601593346740-925612772716?w=100&h=100&fit=crop",
-      category: "electronics",
-      stock: 40,
-    },
-  ];
-
-  // Filter products based on search and category
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollButtons, setShowScrollButtons] = useState({
+    left: false,
+    right: false,
   });
 
-  // Cart functions
+  // Fetch Products
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery<
+    Product[]
+  >({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const response = await AXIOS.get(PRODUCT_URL);
+      return response.data;
+    },
+  });
+
+  // Fetch Categories
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await AXIOS.get(CATEGORY_URL);
+      return response.data;
+    },
+  });
+
+  // Filter products
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === "all" ||
+        product.CategoryId === Number(selectedCategory);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, selectedCategory]);
+
+  // Cart operations
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
+        if (existingItem.quantity >= product.stock) {
+          successToast("Cannot add more than available stock", "warn");
+          return prevCart;
+        }
         return prevCart.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -227,11 +110,17 @@ const POS: React.FC = () => {
   const updateQuantity = (productId: number, change: number) => {
     setCart((prevCart) =>
       prevCart
-        .map((item) =>
-          item.id === productId
-            ? { ...item, quantity: Math.max(0, item.quantity + change) }
-            : item
-        )
+        .map((item) => {
+          if (item.id === productId) {
+            const newQuantity = item.quantity + change;
+            if (newQuantity > item.stock) {
+              successToast("Cannot add more than available stock", "warn");
+              return item;
+            }
+            return { ...item, quantity: Math.max(0, newQuantity) };
+          }
+          return item;
+        })
         .filter((item) => item.quantity > 0)
     );
   };
@@ -242,14 +131,67 @@ const POS: React.FC = () => {
 
   // Calculate totals
   const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + Number(item?.price || 0) * Number(item?.quantity || 0),
     0
   );
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + tax;
 
-  // Add cart total items count
+  // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Add this function to check scroll buttons visibility
+  const checkScrollButtons = () => {
+    if (categoryScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        categoryScrollRef.current;
+      setShowScrollButtons({
+        left: scrollLeft > 0,
+        right: scrollLeft < scrollWidth - clientWidth - 10, // 10px buffer
+      });
+    }
+  };
+
+  // Add scroll handlers
+  const handleScroll = (direction: "left" | "right") => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = 200; // Adjust this value as needed
+      const newScrollLeft =
+        direction === "left"
+          ? categoryScrollRef.current.scrollLeft - scrollAmount
+          : categoryScrollRef.current.scrollLeft + scrollAmount;
+
+      categoryScrollRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Add useEffect to initialize and update scroll buttons
+  useEffect(() => {
+    checkScrollButtons();
+    const scrollContainer = categoryScrollRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", checkScrollButtons);
+      window.addEventListener("resize", checkScrollButtons);
+    }
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener("scroll", checkScrollButtons);
+        window.removeEventListener("resize", checkScrollButtons);
+      }
+    };
+  }, []);
+
+  if (isLoadingProducts || isLoadingCategories) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+        <Spinner color="#32cd32" size="40px" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-5rem)] flex flex-col md:flex-row gap-6 relative">
@@ -272,20 +214,58 @@ const POS: React.FC = () => {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
+          <div className="relative flex items-center">
+            {/* Left Scroll Button */}
+            {showScrollButtons.left && (
               <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => handleScroll("left")}
+                className="absolute left-0 z-10 h-full px-2 flex items-center justify-center bg-gradient-to-r from-white via-white to-transparent"
+              >
+                <FaChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
+
+            {/* Categories Container */}
+            <div
+              ref={categoryScrollRef}
+              className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth mx-8"
+              onScroll={checkScrollButtons}
+            >
+              <button
+                key="all"
+                onClick={() => setSelectedCategory("all")}
                 className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                  selectedCategory === category.id
+                  selectedCategory === "all"
                     ? "bg-brand-primary text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {category.name}
+                All Products
               </button>
-            ))}
+              {categories.map((category: any) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id.toString())}
+                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
+                    selectedCategory === category.id.toString()
+                      ? "bg-brand-primary text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Right Scroll Button */}
+            {showScrollButtons.right && (
+              <button
+                onClick={() => handleScroll("right")}
+                className="absolute right-0 z-10 h-full px-2 flex items-center justify-center bg-gradient-to-l from-white via-white to-transparent"
+              >
+                <FaChevronRight className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -297,21 +277,28 @@ const POS: React.FC = () => {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 className="bg-white border rounded-lg p-2 hover:shadow-md transition-shadow text-left"
+                disabled={product.stock === 0}
               >
                 <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
                   <img
-                    src={product.image}
-                    alt={product.name}
+                    src={product?.productImage}
+                    alt={product?.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="mt-2">
-                  <h3 className="font-medium truncate">{product.name}</h3>
+                  <h3 className="font-medium truncate">{product?.name}</h3>
                   <p className="text-brand-primary font-semibold">
-                    ${product.price.toFixed(2)}
+                    ${Number(product?.price || 0).toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Stock: {product.stock}
+                  <p
+                    className={`text-sm ${
+                      product?.stock > 0 ? "text-gray-500" : "text-red-500"
+                    }`}
+                  >
+                    {product?.stock > 0
+                      ? `Stock: ${product?.stock}`
+                      : "Out of Stock"}
                   </p>
                 </div>
               </button>
@@ -382,14 +369,14 @@ const POS: React.FC = () => {
                   className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg"
                 >
                   <img
-                    src={item.image}
+                    src={item.productImage}
                     alt={item.name}
                     className="w-12 h-12 rounded object-cover"
                   />
                   <div className="flex-1">
                     <h4 className="font-medium">{item.name}</h4>
                     <p className="text-sm text-gray-500">
-                      ${item.price.toFixed(2)} × {item.quantity}
+                      ${Number(item?.price || 0).toFixed(2)} × {item.quantity}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

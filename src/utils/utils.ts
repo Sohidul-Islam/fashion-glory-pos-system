@@ -3,7 +3,10 @@ import { BASE_URL } from "@/api/api";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-export const successToast = (message: string, type: "success" | "error") => {
+export const successToast = (
+  message: string,
+  type: "success" | "error" | "warn"
+) => {
   toast[type](message, {
     position: "top-right",
     autoClose: 5000,
