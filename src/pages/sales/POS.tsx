@@ -12,12 +12,11 @@ import {
   FaMoneyBill,
   FaQrcode,
   FaTimes,
-  FaChevronLeft,
-  FaChevronRight,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { PRODUCT_URL, CATEGORY_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
+import ScrollButton from "@/components/ScrollButton";
 
 import { successToast } from "@/utils/utils";
 
@@ -217,12 +216,10 @@ const POS: React.FC = () => {
           <div className="relative flex items-center">
             {/* Left Scroll Button */}
             {showScrollButtons.left && (
-              <button
+              <ScrollButton
+                direction="left"
                 onClick={() => handleScroll("left")}
-                className="absolute left-0 z-10 h-full px-2 flex items-center justify-center bg-gradient-to-r from-white via-white to-transparent"
-              >
-                <FaChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
+              />
             )}
 
             {/* Categories Container */}
@@ -259,12 +256,10 @@ const POS: React.FC = () => {
 
             {/* Right Scroll Button */}
             {showScrollButtons.right && (
-              <button
+              <ScrollButton
+                direction="right"
                 onClick={() => handleScroll("right")}
-                className="absolute right-0 z-10 h-full px-2 flex items-center justify-center bg-gradient-to-l from-white via-white to-transparent"
-              >
-                <FaChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
+              />
             )}
           </div>
         </div>
