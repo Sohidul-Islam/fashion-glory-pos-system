@@ -18,6 +18,8 @@ import Spinner from "@/components/Spinner";
 import Categories from "../pages/inventory/Categories";
 import Brands from "../pages/inventory/Brands";
 import Units from "../pages/inventory/Units";
+import Sizes from "../pages/inventory/Sizes";
+import Colors from "../pages/inventory/Colors";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -58,6 +60,8 @@ const AppRoutes = () => {
           <Route path="categories" element={<Categories />} />
           <Route path="brands" element={<Brands />} />
           <Route path="units" element={<Units />} />
+          <Route path="sizes" element={<Sizes />} />
+          <Route path="colors" element={<Colors />} />
         </Route>
 
         {/* Other Routes */}

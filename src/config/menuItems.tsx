@@ -10,6 +10,8 @@ import {
   FaTruck,
   FaTags,
   FaRuler,
+  FaPalette,
+  FaRulerHorizontal,
 } from "react-icons/fa";
 
 export const menuItems = [
@@ -74,6 +76,18 @@ export const menuItems = [
         title: "Units",
         path: "/inventory/units",
         icon: <FaRuler className="w-5 h-5" />,
+      },
+      {
+        id: "sizes",
+        title: "Sizes",
+        path: "/inventory/sizes",
+        icon: <FaRulerHorizontal className="w-5 h-5" />,
+      },
+      {
+        id: "colors",
+        title: "Colors",
+        path: "/inventory/colors",
+        icon: <FaPalette className="w-5 h-5" />,
       },
     ],
   },
