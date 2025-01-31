@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface BarcodeModalProps {
   sku: string;
@@ -14,69 +13,119 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   price,
   onClose,
 }) => {
+  const barcodeRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Initialize barcode after component mounts
-    const svg = document.querySelector("#barcode");
-    if (svg) {
-      (window as any).JsBarcode(svg, sku, {
+    if (barcodeRef.current) {
+      (window as any).JsBarcode(barcodeRef.current, sku, {
         format: "CODE128",
-        width: 2,
-        height: 100,
+        width: 1.5, // Reduced width
+        height: 40, // Reduced height
         displayValue: true,
-        fontSize: 14,
-        margin: 10,
+        fontSize: 8, // Smaller font size
+        margin: 5, // Reduced margin
+        textMargin: 2, // Added smaller text margin
       });
     }
   }, [sku]);
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
+    const printContent = containerRef.current?.innerHTML || "";
+    const printWindow = window.open("", "", "height=600,width=800");
+
     if (printWindow) {
       printWindow.document.write(`
+        <!DOCTYPE html>
         <html>
           <head>
             <title>Print Barcode</title>
             <style>
+              @page {
+                size: 40mm 25mm;  /* Adjusted size for standard barcode labels */
+                margin: 0;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                width: 40mm;
+                height: 25mm;
+              }
+              .barcode-container {
+                width: 40mm;
+                height: 25mm;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 1mm;
+              }
+              .barcode-wrapper {
+                transform: scale(0.9); /* Slightly scale down to ensure fit */
+                transform-origin: center center;
+              }
+              svg {
+                display: block;
+                width: 35mm !important;
+                height: auto !important;
+              }
+              .product-name {
+                font-size: 6pt;
+                line-height: 1.2;
+                font-family: Arial, sans-serif;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 35mm;
+                text-align: center;
+              }
+              .sku {
+                font-size: 6pt;
+                color: #666;
+                line-height: 1.2;
+                font-family: Arial, sans-serif;
+              }
+              .product-price {
+                font-size: 7pt;
+                font-weight: bold;
+                line-height: 1.2;
+                font-family: Arial, sans-serif;
+              }
               @media print {
-                body {
-                  margin: 0;
-                  padding: 10mm;
+                html, body {
+                  width: 40mm;
+                  height: 25mm;
+                  overflow: hidden;
                 }
                 .barcode-container {
-                  width: 50mm;
-                  padding: 2mm;
-                  text-align: center;
+                  break-inside: avoid;
                   page-break-inside: avoid;
-                }
-                .product-name {
-                  font-size: 10pt;
-                  margin: 2mm 0;
-                  font-family: Arial, sans-serif;
-                }
-                .product-price {
-                  font-size: 12pt;
-                  font-weight: bold;
-                  margin: 2mm 0;
-                  font-family: Arial, sans-serif;
-                }
-                svg {
-                  max-width: 100%;
-                  height: auto;
                 }
               }
             </style>
           </head>
           <body>
             <div class="barcode-container">
-              ${document.querySelector("#barcode-container")?.innerHTML || ""}
+              <div class="barcode-wrapper">
+                ${printContent}
+              </div>
             </div>
+            <script>
+              window.onload = function() {
+                window.print();
+                window.onafterprint = function() {
+                  window.close();
+                };
+              };
+            </script>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
     }
   };
 
@@ -84,14 +133,11 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     <div className="p-4 space-y-6">
       {/* Barcode Preview */}
       <div className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
-        <div
-          id="barcode-container"
-          className="w-64 mx-auto space-y-2 text-center"
-        >
-          <svg id="barcode" className="w-full"></svg>
-          <div className="text-sm font-medium product-name">{name}</div>
-          <div className="text-sm text-gray-600">SKU: {sku}</div>
-          <div className="text-sm font-bold product-price">
+        <div ref={containerRef} className="w-48 mx-auto space-y-1 text-center">
+          <svg ref={barcodeRef} className="w-full"></svg>
+          <div className="text-xs font-medium product-name">{name}</div>
+          <div className="text-xs text-gray-600 sku">SKU: {sku}</div>
+          <div className="text-xs font-bold product-price">
             ${Number(price).toFixed(2)}
           </div>
         </div>

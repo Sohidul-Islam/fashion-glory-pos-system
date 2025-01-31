@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -7,7 +6,6 @@ import {
   FaPlus,
   FaEdit,
   FaTrash,
-  FaBox,
   FaEye,
   FaBarcode,
 } from "react-icons/fa";
@@ -15,14 +13,12 @@ import AXIOS from "@/api/network/Axios";
 import {
   PRODUCT_URL,
   DELETE_PRODUCT_URL,
-  UPDATE_PRODUCT_URL,
   CATEGORY_URL,
   BRANDS_URL,
 } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 
-import { successToast, uploadFile } from "@/utils/utils";
 import AddProduct from "@/components/shared/AddProduct";
 import { Product, ProductFormData } from "@/types/ProductType";
 import { Brand } from "@/types/categoryType";
@@ -30,17 +26,6 @@ import { Category } from "@/types/categoryType";
 import BarcodeModal from "@/components/BarcodeModal";
 
 // Add this interface at the top
-interface ProductVariant {
-  id: number;
-  sku: string;
-  quantity: number;
-  alertQuantity: number;
-  imageUrl: string;
-  status: string;
-  ProductId: number;
-  ColorId: number;
-  SizeId: number;
-}
 
 // Add this interface for the view modal
 interface ViewModalProps {
@@ -49,12 +34,6 @@ interface ViewModalProps {
 }
 
 // Add this interface for the barcode modal
-interface BarcodeModalProps {
-  sku: string;
-  name: string;
-  price: number;
-  onClose: () => void;
-}
 
 const Products: React.FC = () => {
   const queryClient = useQueryClient();
@@ -94,6 +73,8 @@ const Products: React.FC = () => {
   // Additional state
   const [imagePreview, setImagePreview] = useState<string>("");
 
+  console.log(imagePreview);
+
   // Add state for selected variant
   const [selectedVariants, setSelectedVariants] = useState<
     Record<number, number>
@@ -123,38 +104,6 @@ const Products: React.FC = () => {
     queryFn: async () => {
       const response = await AXIOS.get(BRANDS_URL);
       return response.data;
-    },
-  });
-
-  // Mutations
-  const createMutation = useMutation<any, Error, ProductFormData>({
-    mutationFn: (data: ProductFormData) => AXIOS.post(PRODUCT_URL, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Product created successfully");
-      setIsModalOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to create product");
-    },
-  });
-
-  const updateMutation = useMutation<
-    any,
-    Error,
-    { id: number; updates: ProductFormData }
-  >({
-    mutationFn: (data) =>
-      AXIOS.post(`${UPDATE_PRODUCT_URL}/${data.id}`, data.updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Product updated successfully");
-      setIsModalOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || "Failed to update product");
     },
   });
 
@@ -246,47 +195,6 @@ const Products: React.FC = () => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
 
   // Add this component for the view modal
-
-  // Add this component for the barcode display
-  const BarcodeModal: React.FC<BarcodeModalProps> = ({
-    sku,
-    name,
-    price,
-    onClose,
-  }) => {
-    return (
-      <div className="p-4 space-y-6">
-        {/* Barcode Preview */}
-        <div className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
-          <div
-            className="w-64 mx-auto space-y-2 text-center"
-            ref={(el) => el && (window as any).JsBarcode(el, sku)}
-          >
-            <svg className="w-full"></svg>
-            <div className="text-sm font-medium">{name}</div>
-            <div className="text-sm text-gray-600">SKU: {sku}</div>
-            <div className="text-sm font-bold">${Number(price).toFixed(2)}</div>
-          </div>
-        </div>
-
-        {/* Print Button */}
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-6 py-2 text-white bg-brand-primary rounded-lg hover:bg-brand-hover transition-colors"
-          >
-            Print Barcode
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   // Update the product card JSX
   return (
@@ -523,10 +431,7 @@ const Products: React.FC = () => {
 
 export default Products;
 
-export const ViewProductModal: React.FC<ViewModalProps> = ({
-  product,
-  onClose,
-}) => {
+export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
   const [selectedSku, setSelectedSku] = useState<{
     sku: string;
     name: string;
