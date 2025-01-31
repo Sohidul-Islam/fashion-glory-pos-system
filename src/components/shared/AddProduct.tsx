@@ -25,6 +25,7 @@ import { Brand, Unit } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
 import Spinner from "../Spinner";
 import { ProductFormData } from "@/types/ProductType";
+import ProductVariantForm from "./ProductVariantForm";
 
 function AddProduct({
   productData,
@@ -538,6 +539,15 @@ function AddProduct({
             )}
           </div>
         </div>
+      </div>
+      {/* Add Product Variant Form */}
+      <div className="mt-8 pt-8 border-t border-gray-200">
+        <ProductVariantForm
+          productId={productData?.id}
+          onSuccess={() => {
+            // Refresh product data or handle success
+          }}
+        />
       </div>
       {/* Form Actions */}
       <div className="flex justify-end gap-4 mt-6">

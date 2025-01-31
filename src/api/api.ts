@@ -34,3 +34,6 @@ export const UPDATE_SIZES_URL = `${BASE_URL}/sizes/update`;
 export const COLORS_URL = `${BASE_URL}/colors`;
 export const DELETE_COLORS_URL = `${BASE_URL}/colors/delete`;
 export const UPDATE_COLORS_URL = `${BASE_URL}/colors/update`;
+export const PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants`;
+export const DELETE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/delete`;
+export const UPDATE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/update`;
