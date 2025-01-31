@@ -9,6 +9,7 @@ import {
   FaTrash,
   FaBox,
   FaEye,
+  FaBarcode,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
@@ -26,6 +27,7 @@ import AddProduct from "@/components/shared/AddProduct";
 import { Product, ProductFormData } from "@/types/ProductType";
 import { Brand } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
+import BarcodeModal from "@/components/BarcodeModal";
 
 // Add this interface at the top
 interface ProductVariant {
@@ -43,6 +45,14 @@ interface ProductVariant {
 // Add this interface for the view modal
 interface ViewModalProps {
   product: Product;
+  onClose: () => void;
+}
+
+// Add this interface for the barcode modal
+interface BarcodeModalProps {
+  sku: string;
+  name: string;
+  price: number;
   onClose: () => void;
 }
 
@@ -236,6 +246,47 @@ const Products: React.FC = () => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
 
   // Add this component for the view modal
+
+  // Add this component for the barcode display
+  const BarcodeModal: React.FC<BarcodeModalProps> = ({
+    sku,
+    name,
+    price,
+    onClose,
+  }) => {
+    return (
+      <div className="p-4 space-y-6">
+        {/* Barcode Preview */}
+        <div className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
+          <div
+            className="w-64 mx-auto space-y-2 text-center"
+            ref={(el) => el && (window as any).JsBarcode(el, sku)}
+          >
+            <svg className="w-full"></svg>
+            <div className="text-sm font-medium">{name}</div>
+            <div className="text-sm text-gray-600">SKU: {sku}</div>
+            <div className="text-sm font-bold">${Number(price).toFixed(2)}</div>
+          </div>
+        </div>
+
+        {/* Print Button */}
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="px-6 py-2 text-white bg-brand-primary rounded-lg hover:bg-brand-hover transition-colors"
+          >
+            Print Barcode
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Update the product card JSX
   return (
@@ -476,6 +527,17 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({
   product,
   onClose,
 }) => {
+  const [selectedSku, setSelectedSku] = useState<{
+    sku: string;
+    name: string;
+    price: number;
+  } | null>(null);
+
+  // Add this function to handle barcode printing
+  const handlePrintBarcode = (sku: string, name: string, price: number) => {
+    setSelectedSku({ sku, name, price });
+  };
+
   return (
     <div className="space-y-8">
       {/* Product Header - Made responsive */}
@@ -539,7 +601,22 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">SKU</p>
-                <p className="font-medium truncate">{product.sku}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium truncate">{product.sku}</p>
+                  <button
+                    onClick={() =>
+                      handlePrintBarcode(
+                        product.sku,
+                        product.name,
+                        product.price
+                      )
+                    }
+                    className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
+                    title="Print Barcode"
+                  >
+                    <FaBarcode className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Category</p>
@@ -601,9 +678,24 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-medium text-gray-800">
-                      SKU: {variant.sku}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-gray-800">
+                        SKU: {variant.sku}
+                      </h4>
+                      <button
+                        onClick={() =>
+                          handlePrintBarcode(
+                            variant.sku,
+                            `${product.name} - ${variant.Color?.name} ${variant.Size?.name}`,
+                            product.price
+                          )
+                        }
+                        className="p-1.5 text-gray-600 hover:text-brand-primary hover:bg-gray-100 rounded-full transition-colors"
+                        title="Print Barcode"
+                      >
+                        <FaBarcode className="w-4 h-4" />
+                      </button>
+                    </div>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         variant.status === "active"
@@ -640,6 +732,23 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Add Barcode Modal */}
+      <Modal
+        isOpen={!!selectedSku}
+        onClose={() => setSelectedSku(null)}
+        title="Print Barcode"
+        className="max-w-md"
+      >
+        {selectedSku && (
+          <BarcodeModal
+            sku={selectedSku.sku}
+            name={selectedSku.name}
+            price={selectedSku.price}
+            onClose={() => setSelectedSku(null)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
