@@ -24,6 +24,8 @@ import {
   getExpiryDate,
 } from "@/utils/utils";
 import Modal from "@/components/Modal";
+import { ProductVariant } from "@/types/ProductType";
+import { toast } from "react-toastify";
 
 interface Product {
   id: number;
@@ -83,6 +85,157 @@ interface OrderData {
   expiryDate: string;
 }
 
+// Add this component for variant selection modal
+interface VariantSelectionModalProps {
+  product: Product;
+  onSelect: (variant: ProductVariant) => void;
+  onClose: () => void;
+}
+
+const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
+  product,
+  onSelect,
+  onClose,
+}) => {
+  const [selectedColor, setSelectedColor] = useState<number | null>(null);
+  const [selectedSize, setSelectedSize] = useState<number | null>(null);
+
+  // Group variants by color and size
+  const variantsByColor = useMemo(() => {
+    const groups: Record<number, ProductVariant[]> = {};
+    product.ProductVariants?.forEach((variant) => {
+      if (!groups[variant.ColorId]) {
+        groups[variant.ColorId] = [] as ProductVariant[];
+      }
+      groups[variant.ColorId].push({
+        ...variant,
+        status: variant.status as "active" | "inactive",
+      });
+    });
+    return groups;
+  }, [product.ProductVariants]);
+
+  const availableSizes = useMemo(() => {
+    if (!selectedColor) return [];
+    return variantsByColor[selectedColor].map((v) => v.SizeId);
+  }, [selectedColor, variantsByColor]);
+
+  const selectedVariant = useMemo(() => {
+    if (!selectedColor || !selectedSize) return null;
+    return product.ProductVariants?.find(
+      (v) => v.ColorId === selectedColor && v.SizeId === selectedSize
+    );
+  }, [selectedColor, selectedSize, product.ProductVariants]);
+
+  return (
+    <div className="space-y-6">
+      {/* Product Preview */}
+      <div className="flex gap-4 items-start">
+        <img
+          src={selectedVariant?.imageUrl || product.productImage}
+          alt={product.name}
+          className="w-32 h-32 object-cover rounded-lg"
+        />
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {product.name}
+          </h3>
+          <p className="text-sm text-gray-500">Select variant options</p>
+        </div>
+      </div>
+
+      {/* Color Selection */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-gray-700">Color</label>
+        <div className="grid grid-cols-4 gap-3">
+          {Object.entries(variantsByColor).map(([colorId, variants]) => (
+            <button
+              key={colorId}
+              onClick={() => {
+                setSelectedColor(Number(colorId));
+                setSelectedSize(null);
+              }}
+              className={`relative p-1 rounded-lg border-2 transition-all ${
+                selectedColor === Number(colorId)
+                  ? "border-brand-primary shadow-md"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <img
+                src={variants[0].imageUrl}
+                alt={`Color ${colorId}`}
+                className="w-full aspect-square object-cover rounded"
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Size Selection */}
+      {selectedColor && (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">
+            Size
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {availableSizes.map((sizeId) => {
+              const variant = product.ProductVariants?.find(
+                (v) => v.ColorId === selectedColor && v.SizeId === sizeId
+              );
+              return (
+                <button
+                  key={sizeId}
+                  onClick={() => setSelectedSize(sizeId)}
+                  disabled={variant?.quantity === 0}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                    selectedSize === sizeId
+                      ? "border-brand-primary bg-brand-primary/10"
+                      : "border-gray-200 hover:border-gray-300"
+                  } ${
+                    variant?.quantity === 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  <span className="font-medium">Size {sizeId}</span>
+                  {variant && (
+                    <span className="block text-xs text-gray-500">
+                      Stock: {variant.quantity}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Add to Cart Button */}
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+        <button
+          disabled={!selectedVariant}
+          onClick={() =>
+            selectedVariant &&
+            onSelect({
+              ...selectedVariant,
+              status: selectedVariant.status as "active" | "inactive",
+            })
+          }
+          className="px-4 py-2 text-white bg-brand-primary rounded-lg hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const POS: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -97,6 +250,7 @@ const POS: React.FC = () => {
   const [selectedVariants, setSelectedVariants] = useState<
     Record<number, number>
   >({});
+  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
@@ -228,58 +382,51 @@ const POS: React.FC = () => {
   // Add useEffect to initialize and update scroll buttons
   useEffect(() => {
     checkScrollButtons();
-    const scrollContainer = categoryScrollRef.current;
-    if (scrollContainer) {
-      scrollContainer.addEventListener("scroll", checkScrollButtons);
-      window.addEventListener("resize", checkScrollButtons);
-    }
-
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener("scroll", checkScrollButtons);
-        window.removeEventListener("resize", checkScrollButtons);
-      }
-    };
+    window.addEventListener("resize", checkScrollButtons);
+    return () => window.removeEventListener("resize", checkScrollButtons);
   }, []);
 
   // Add this mutation
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: OrderData) => {
-      const response = await AXIOS.post("/orders", orderData);
+      const response = await AXIOS.post("/api/orders", orderData);
       return response.data;
     },
-    onSuccess: () => {
-      successToast("Order created successfully!", "success");
+    onSuccess: (data) => {
+      setCurrentOrder(data);
+      setShowInvoice(true);
     },
     onError: (error: any) => {
-      successToast(error?.message || "Failed to create order", "error");
+      toast.error(error?.message || "Failed to create order");
     },
   });
 
   // Add these handlers
   const handlePayment = (method: "cash" | "card") => {
     if (cart.length === 0) {
-      successToast("Cart is empty!", "error");
+      toast.warning("Cart is empty");
       return;
     }
 
-    const verificationCode = generateVerificationCode();
+    if (!customerInfo.name || !customerInfo.phone) {
+      toast.warning("Please fill in customer information");
+      return;
+    }
+
     const orderData: OrderData = {
       orderId: generateOrderId(),
-      date: new Date().toLocaleString(),
+      date: new Date().toISOString(),
       customer: customerInfo,
       items: cart,
       subtotal,
       tax,
       total,
       paymentMethod: method,
-      verificationCode,
-      expiryDate: getExpiryDate(new Date().toLocaleString()),
+      verificationCode: generateVerificationCode(),
+      expiryDate: getExpiryDate(new Date().toISOString()),
     };
 
     createOrderMutation.mutate(orderData);
-    setCurrentOrder(orderData);
-    setShowInvoice(true);
   };
 
   const handlePrintInvoice = () => {
@@ -294,24 +441,33 @@ const POS: React.FC = () => {
     }
   };
 
-  const handleAddToCart = (product: Product, variantId?: number) => {
-    if (product.ProductVariants.length > 0 && !variantId) {
-      successToast("Please select a variant", "warn");
-      return;
+  const handleAddToCart = (product: Product) => {
+    if (product.ProductVariants?.length > 0) {
+      setVariantProduct(product);
+    } else {
+      addToCart({
+        ...product,
+        cartItemId: `${product.id}-default`,
+        imageUrl: product.productImage,
+        quantity: 1,
+        sku: "", // Added missing 'sku' property
+      });
     }
+  };
 
-    const variant = product.ProductVariants.find((v) => v.id === variantId);
+  // Add variant selection handler
+  const handleVariantSelect = (variant: ProductVariant) => {
+    if (!variantProduct) return;
 
-    // Add to cart with variant details
     addToCart({
-      ...product,
+      ...variantProduct,
       selectedVariant: variant,
-      cartItemId: `${product.id}-${variantId || "default"}`,
-      imageUrl: variant?.imageUrl || product.productImage,
-      sku: variant?.sku || product.ProductVariants[0]?.sku,
+      cartItemId: `${variantProduct.id}-${variant.id}`,
+      imageUrl: variant.imageUrl,
       quantity: 1,
-      stock: variant?.quantity || product.ProductVariants[0]?.quantity,
+      sku: variant.sku, // Added missing 'sku' property
     });
+    setVariantProduct(null);
   };
 
   if (isLoadingProducts || isLoadingCategories) {
@@ -460,9 +616,7 @@ const POS: React.FC = () => {
                   {/* Add to Cart Button */}
                   <button
                     type="button"
-                    onClick={() =>
-                      handleAddToCart(product, selectedVariants[product.id])
-                    }
+                    onClick={() => handleAddToCart(product)}
                     disabled={
                       !selectedVariants[product.id] &&
                       product.ProductVariants?.length > 0
@@ -652,6 +806,22 @@ const POS: React.FC = () => {
           }}
           onPrint={handlePrintInvoice}
         />
+      </Modal>
+
+      {/* Variant Selection Modal */}
+      <Modal
+        isOpen={!!variantProduct}
+        onClose={() => setVariantProduct(null)}
+        title="Select Variant"
+        className="max-w-lg"
+      >
+        {variantProduct && (
+          <VariantSelectionModal
+            product={variantProduct}
+            onSelect={handleVariantSelect}
+            onClose={() => setVariantProduct(null)}
+          />
+        )}
       </Modal>
     </div>
   );

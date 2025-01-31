@@ -32,6 +32,7 @@ export interface ProductVariant {
   ColorId: number;
   SizeId: number;
   quantity: number;
+  alertQuantity: number;
   imageUrl: string;
 }
 
