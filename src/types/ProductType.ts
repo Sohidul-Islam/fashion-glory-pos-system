@@ -1,4 +1,4 @@
-import { Brand, Unit } from "./categoryType";
+import { Brand, Color, Size, Unit } from "./categoryType";
 
 import { Category } from "./categoryType";
 
@@ -33,6 +33,8 @@ export interface ProductVariant {
   SizeId: number;
   quantity: number;
   alertQuantity: number;
+  Size: Size;
+  Color: Color;
   imageUrl: string;
 }
 

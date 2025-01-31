@@ -26,6 +26,8 @@ import {
 import Modal from "@/components/Modal";
 import { ProductVariant } from "@/types/ProductType";
 import { toast } from "react-toastify";
+import { Size } from "@/types/categoryType";
+import { Color } from "@/types/categoryType";
 
 interface Product {
   id: number;
@@ -48,6 +50,8 @@ interface Product {
     ProductId: number;
     ColorId: number;
     SizeId: number;
+    Size: Size;
+    Color: Color;
   }[];
 }
 
@@ -97,17 +101,28 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
   onSelect,
   onClose,
 }) => {
-  const [selectedColor, setSelectedColor] = useState<number | null>(null);
-  const [selectedSize, setSelectedSize] = useState<number | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null
+  );
 
-  // Group variants by color and size
-  const variantsByColor = useMemo(() => {
-    const groups: Record<number, ProductVariant[]> = {};
+  // Group variants by color for better organization
+  const variantGroups = useMemo(() => {
+    const groups: Record<
+      number,
+      {
+        color: Color;
+        variants: ProductVariant[];
+      }
+    > = {};
+
     product.ProductVariants?.forEach((variant) => {
       if (!groups[variant.ColorId]) {
-        groups[variant.ColorId] = [] as ProductVariant[];
+        groups[variant.ColorId] = {
+          color: variant.Color,
+          variants: [],
+        };
       }
-      groups[variant.ColorId].push({
+      groups[variant.ColorId].variants.push({
         ...variant,
         status: variant.status as "active" | "inactive",
       });
@@ -115,121 +130,132 @@ const VariantSelectionModal: React.FC<VariantSelectionModalProps> = ({
     return groups;
   }, [product.ProductVariants]);
 
-  const availableSizes = useMemo(() => {
-    if (!selectedColor) return [];
-    return variantsByColor[selectedColor].map((v) => v.SizeId);
-  }, [selectedColor, variantsByColor]);
-
-  const selectedVariant = useMemo(() => {
-    if (!selectedColor || !selectedSize) return null;
-    return product.ProductVariants?.find(
-      (v) => v.ColorId === selectedColor && v.SizeId === selectedSize
-    );
-  }, [selectedColor, selectedSize, product.ProductVariants]);
-
   return (
     <div className="space-y-6">
-      {/* Product Preview */}
-      <div className="flex gap-4 items-start">
-        <img
-          src={selectedVariant?.imageUrl || product.productImage}
-          alt={product.name}
-          className="w-32 h-32 object-cover rounded-lg"
-        />
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800">
+      {/* Product Header */}
+      <div className="flex gap-6">
+        <div className="w-1/3 aspect-square rounded-lg overflow-hidden">
+          <img
+            src={selectedVariant?.imageUrl || product.productImage}
+            alt={product.name}
+            className="w-full h-full object-cover transition-all duration-300"
+          />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-semibold text-gray-800">
             {product.name}
           </h3>
-          <p className="text-sm text-gray-500">Select variant options</p>
+          <p className="text-sm text-gray-500 mt-1">Choose your variant</p>
+          {selectedVariant && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Selected:</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-4 h-4 rounded-full border"
+                    style={{ backgroundColor: selectedVariant.Color?.code }}
+                  />
+                  <span className="font-medium">
+                    {selectedVariant.Color?.name} / {selectedVariant.Size?.name}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">SKU:</span>
+                  <span className="font-medium">{selectedVariant.sku}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Stock:</span>
+                  <span className="font-medium">
+                    {selectedVariant.quantity}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Color Selection */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">Color</label>
-        <div className="grid grid-cols-4 gap-3">
-          {Object.entries(variantsByColor).map(([colorId, variants]) => (
-            <button
-              key={colorId}
-              onClick={() => {
-                setSelectedColor(Number(colorId));
-                setSelectedSize(null);
-              }}
-              className={`relative p-1 rounded-lg border-2 transition-all ${
-                selectedColor === Number(colorId)
-                  ? "border-brand-primary shadow-md"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <img
-                src={variants[0].imageUrl}
-                alt={`Color ${colorId}`}
-                className="w-full aspect-square object-cover rounded"
+      {/* Variants Grid */}
+      <div className="space-y-6">
+        {Object.entries(variantGroups).map(([colorId, group]) => (
+          <div key={colorId} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span
+                className="w-5 h-5 rounded-full border"
+                style={{ backgroundColor: group.color.code }}
               />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Size Selection */}
-      {selectedColor && (
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Size
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {availableSizes.map((sizeId) => {
-              const variant = product.ProductVariants?.find(
-                (v) => v.ColorId === selectedColor && v.SizeId === sizeId
-              );
-              return (
+              <h4 className="font-medium text-gray-700">{group.color.name}</h4>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {group.variants.map((variant) => (
                 <button
-                  key={sizeId}
-                  onClick={() => setSelectedSize(sizeId)}
-                  disabled={variant?.quantity === 0}
-                  className={`px-4 py-2 rounded-lg border-2 transition-all ${
-                    selectedSize === sizeId
-                      ? "border-brand-primary bg-brand-primary/10"
-                      : "border-gray-200 hover:border-gray-300"
-                  } ${
-                    variant?.quantity === 0
+                  key={variant.id}
+                  onClick={() => setSelectedVariant(variant)}
+                  disabled={variant.quantity === 0}
+                  className={`relative group rounded-lg overflow-hidden transition-all ${
+                    variant.quantity === 0
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                   }`}
                 >
-                  <span className="font-medium">Size {sizeId}</span>
-                  {variant && (
-                    <span className="block text-xs text-gray-500">
+                  <div className="aspect-square">
+                    <img
+                      src={variant.imageUrl}
+                      alt={`${variant.Color?.name} / ${variant.Size?.name}`}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${
+                        selectedVariant?.id === variant.id
+                          ? "scale-110"
+                          : "group-hover:scale-105"
+                      }`}
+                    />
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                        selectedVariant?.id === variant.id
+                          ? "bg-black/40"
+                          : "bg-black/0 group-hover:bg-black/20"
+                      }`}
+                    >
+                      <div
+                        className={`px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg transform transition-all duration-300 ${
+                          selectedVariant?.id === variant.id
+                            ? "scale-100 opacity-100"
+                            : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
+                        }`}
+                      >
+                        <span className="text-sm font-medium">
+                          {variant.Size?.name}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2">
+                    <span className="px-2 py-1 text-xs font-medium bg-white/90 rounded-full shadow">
                       Stock: {variant.quantity}
                     </span>
-                  )}
+                  </div>
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Add to Cart Button */}
-      <div className="flex justify-end gap-3">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3 pt-4 border-t">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
         >
           Cancel
         </button>
         <button
           disabled={!selectedVariant}
-          onClick={() =>
-            selectedVariant &&
-            onSelect({
-              ...selectedVariant,
-              status: selectedVariant.status as "active" | "inactive",
-            })
-          }
-          className="px-4 py-2 text-white bg-brand-primary rounded-lg hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => selectedVariant && onSelect(selectedVariant)}
+          className="px-6 py-2 text-white bg-brand-primary rounded-lg hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Add to Cart
+          {selectedVariant ? "Add to Cart" : "Select a Variant"}
         </button>
       </div>
     </div>

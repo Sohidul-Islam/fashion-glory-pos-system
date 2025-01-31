@@ -236,170 +236,6 @@ const Products: React.FC = () => {
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
 
   // Add this component for the view modal
-  const ViewProductModal: React.FC<ViewModalProps> = ({ product, onClose }) => {
-    return (
-      <div className="space-y-8">
-        {/* Product Header - Made responsive */}
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Image Section */}
-          <div className="w-full md:w-1/3">
-            <div className="relative group">
-              <img
-                src={product.productImage}
-                alt={product.name}
-                className="w-full aspect-square object-cover rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                <a
-                  href={product.productImage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
-                >
-                  <FaEye className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Product Info Section */}
-          <div className="flex-1 space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {product.name}
-                </h2>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    product.status === "active"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {product.status}
-                </span>
-              </div>
-
-              {/* Price and Stock Info */}
-              <div className="flex flex-wrap gap-4">
-                <div className="px-4 py-3 bg-brand-primary/10 rounded-lg">
-                  <p className="text-sm text-gray-600">Price</p>
-                  <p className="text-xl font-bold text-brand-primary">
-                    ${Number(product.price || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="px-4 py-3 bg-gray-100 rounded-lg">
-                  <p className="text-sm text-gray-600">Stock</p>
-                  <p className="text-xl font-bold text-gray-800">
-                    {product.stock}
-                  </p>
-                </div>
-              </div>
-
-              {/* Product Details Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">SKU</p>
-                  <p className="font-medium truncate">{product.sku}</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Category</p>
-                  <p className="font-medium truncate">
-                    {product.Category?.name}
-                  </p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Brand</p>
-                  <p className="font-medium truncate">{product.Brand?.name}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Description
-              </h3>
-              <p className="text-gray-600 whitespace-pre-wrap">
-                {product.description}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Variants Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Product Variants
-            </h3>
-            <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
-              {product.ProductVariants?.length || 0} variants
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {product.ProductVariants?.map((variant) => (
-              <div
-                key={variant.id}
-                className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex gap-4">
-                  <div className="relative group w-20 h-20">
-                    <img
-                      src={variant.imageUrl}
-                      alt={`Variant ${variant.sku}`}
-                      className="w-full h-full object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                      <a
-                        href={variant.imageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
-                      >
-                        <FaEye className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-medium text-gray-800">
-                        SKU: {variant.sku}
-                      </h4>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          variant.status === "active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {variant.status}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Stock:</span>
-                        <span className="font-medium">{variant.quantity}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Color:</span>
-                        <span className="font-medium">#{variant.ColorId}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Size:</span>
-                        <span className="font-medium">#{variant.SizeId}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Update the product card JSX
   return (
@@ -621,7 +457,7 @@ const Products: React.FC = () => {
         isOpen={!!viewProduct}
         onClose={() => setViewProduct(null)}
         title="Product Details"
-        className="max-w-4xl"
+        className="lg:!max-w-[80vw] !max-w-[95vw]"
       >
         {viewProduct && (
           <ViewProductModal
@@ -635,3 +471,175 @@ const Products: React.FC = () => {
 };
 
 export default Products;
+
+export const ViewProductModal: React.FC<ViewModalProps> = ({
+  product,
+  onClose,
+}) => {
+  return (
+    <div className="space-y-8">
+      {/* Product Header - Made responsive */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Image Section */}
+        <div className="w-full md:w-1/3">
+          <div className="relative group">
+            <img
+              src={product.productImage}
+              alt={product.name}
+              className="w-full aspect-square object-cover rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+              <a
+                href={product.productImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+              >
+                <FaEye className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Info Section */}
+        <div className="flex-1 space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {product.name}
+              </h2>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  product.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {product.status}
+              </span>
+            </div>
+
+            {/* Price and Stock Info */}
+            <div className="flex flex-wrap gap-4">
+              <div className="px-4 py-3 bg-brand-primary/10 rounded-lg">
+                <p className="text-sm text-gray-600">Price</p>
+                <p className="text-xl font-bold text-brand-primary">
+                  ${Number(product.price || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="px-4 py-3 bg-gray-100 rounded-lg">
+                <p className="text-sm text-gray-600">Stock</p>
+                <p className="text-xl font-bold text-gray-800">
+                  {product.stock}
+                </p>
+              </div>
+            </div>
+
+            {/* Product Details Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">SKU</p>
+                <p className="font-medium truncate">{product.sku}</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">Category</p>
+                <p className="font-medium truncate">{product.Category?.name}</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">Brand</p>
+                <p className="font-medium truncate">{product.Brand?.name}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Description
+            </h3>
+            <p className="text-gray-600 whitespace-pre-wrap">
+              {product.description}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Variants Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-800">
+            Product Variants
+          </h3>
+          <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+            {product.ProductVariants?.length || 0} variants
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {product.ProductVariants?.map((variant) => (
+            <div
+              key={variant.id}
+              className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex gap-4">
+                <div className="relative group w-20 h-20">
+                  <img
+                    src={variant.imageUrl}
+                    alt={`Variant ${variant.sku}`}
+                    className="w-full h-full object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                    <a
+                      href={variant.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                    >
+                      <FaEye className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-medium text-gray-800">
+                      SKU: {variant.sku}
+                    </h4>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        variant.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {variant.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Stock:</span>
+                      <span className="font-medium">{variant.quantity}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Color:</span>
+                      <span className="font-medium flex items-center gap-2">
+                        <span
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: variant.Color?.code }}
+                        />
+                        {variant.Color?.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Size:</span>
+                      <span className="font-medium">{variant.Size?.name}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
