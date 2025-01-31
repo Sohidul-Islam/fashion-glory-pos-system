@@ -24,6 +24,17 @@ export interface ProductFormData {
   imageFile?: File | null;
 }
 
+export interface ProductVariant {
+  id: number;
+  sku: string;
+  status: "active" | "inactive";
+  ProductId: number;
+  ColorId: number;
+  SizeId: number;
+  quantity: number;
+  imageUrl: string;
+}
+
 export interface Product {
   id: number;
   code: string | null;
@@ -47,4 +58,5 @@ export interface Product {
   Category: Category;
   Brand: Brand;
   Unit: Unit;
+  ProductVariants: ProductVariant[];
 }

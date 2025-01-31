@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -37,10 +36,35 @@ interface Product {
     id: number;
     name: string;
   };
+  ProductVariants: {
+    id: number;
+    sku: string;
+    quantity: number;
+    alertQuantity: number;
+    imageUrl: string;
+    status: string;
+    ProductId: number;
+    ColorId: number;
+    SizeId: number;
+  }[];
 }
 
 interface CartItem extends Product {
   quantity: number;
+  selectedVariant?: {
+    id: number;
+    sku: string;
+    quantity: number;
+    alertQuantity: number;
+    imageUrl: string;
+    status: string;
+    ProductId: number;
+    ColorId: number;
+    SizeId: number;
+  };
+  cartItemId: string;
+  imageUrl: string;
+  sku: string;
 }
 
 interface OrderData {
@@ -70,6 +94,9 @@ const POS: React.FC = () => {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
+  const [selectedVariants, setSelectedVariants] = useState<
+    Record<number, number>
+  >({});
 
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
@@ -112,22 +139,29 @@ const POS: React.FC = () => {
   }, [products, searchQuery, selectedCategory]);
 
   // Cart operations
-  const addToCart = (product: Product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        if (existingItem.quantity >= product.stock) {
-          successToast("Cannot add more than available stock", "warn");
-          return prevCart;
-        }
-        return prevCart.map((item) =>
-          item.id === product.id
+  const addToCart = (product: CartItem) => {
+    const existingItem = cart.find(
+      (item) => item.cartItemId === product.cartItemId
+    );
+
+    if (existingItem) {
+      if (
+        existingItem.quantity >=
+        (product.selectedVariant?.quantity || product.stock)
+      ) {
+        successToast("Stock limit reached", "warn");
+        return;
+      }
+      setCart(
+        cart.map((item) =>
+          item.cartItemId === product.cartItemId
             ? { ...item, quantity: item.quantity + 1 }
             : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
+        )
+      );
+    } else {
+      setCart([...cart, { ...product, quantity: 1 }]);
+    }
   };
 
   const updateQuantity = (productId: number, change: number) => {
@@ -260,6 +294,26 @@ const POS: React.FC = () => {
     }
   };
 
+  const handleAddToCart = (product: Product, variantId?: number) => {
+    if (product.ProductVariants.length > 0 && !variantId) {
+      successToast("Please select a variant", "warn");
+      return;
+    }
+
+    const variant = product.ProductVariants.find((v) => v.id === variantId);
+
+    // Add to cart with variant details
+    addToCart({
+      ...product,
+      selectedVariant: variant,
+      cartItemId: `${product.id}-${variantId || "default"}`,
+      imageUrl: variant?.imageUrl || product.productImage,
+      sku: variant?.sku || product.ProductVariants[0]?.sku,
+      quantity: 1,
+      stock: variant?.quantity || product.ProductVariants[0]?.quantity,
+    });
+  };
+
   if (isLoadingProducts || isLoadingCategories) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -342,37 +396,83 @@ const POS: React.FC = () => {
 
         {/* Products Grid */}
         <div className="flex-1 p-4 overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
-              <button
+              <div
                 key={product.id}
-                onClick={() => addToCart(product)}
-                className="bg-white border rounded-lg p-2 hover:shadow-md transition-shadow text-left"
-                disabled={product.stock === 0}
+                className="bg-white rounded-lg shadow hover:shadow-md transition-all"
               >
-                <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
+                {/* Product Image */}
+                <div className="relative aspect-square">
                   <img
-                    src={product?.productImage}
-                    alt={product?.name}
-                    className="w-full h-full object-cover"
+                    src={
+                      selectedVariants[product.id]
+                        ? product.ProductVariants.find(
+                            (v) => v.id === selectedVariants[product.id]
+                          )?.imageUrl
+                        : product.ProductVariants?.length > 0
+                        ? product.ProductVariants[0]?.imageUrl
+                        : product.productImage
+                    }
+                    alt={product.name}
+                    className="w-full h-full object-cover rounded-t-lg"
                   />
                 </div>
-                <div className="mt-2">
-                  <h3 className="font-medium truncate">{product?.name}</h3>
-                  <p className="text-brand-primary font-semibold">
-                    ${Number(product?.price || 0).toFixed(2)}
-                  </p>
-                  <p
-                    className={`text-sm ${
-                      product?.stock > 0 ? "text-gray-500" : "text-red-500"
-                    }`}
+
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900">{product.name}</h3>
+
+                  {/* Variant Selection */}
+                  {product.ProductVariants?.length > 0 && (
+                    <div className="mt-3">
+                      <label className="text-sm text-gray-600">
+                        Select Variant
+                      </label>
+                      <div className="mt-2 flex gap-2 overflow-x-auto">
+                        {product.ProductVariants.map((variant) => (
+                          <button
+                            key={variant.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedVariants((prev) => ({
+                                ...prev,
+                                [product.id]: variant.id,
+                              }))
+                            }
+                            className={`flex-none w-16 h-16 rounded-lg overflow-hidden border-2 transition-all
+                              ${
+                                selectedVariants[product.id] === variant.id
+                                  ? "border-brand-primary shadow-lg scale-105"
+                                  : "border-gray-200"
+                              }`}
+                          >
+                            <img
+                              src={variant.imageUrl}
+                              alt={`Variant ${variant.sku}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add to Cart Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleAddToCart(product, selectedVariants[product.id])
+                    }
+                    disabled={
+                      !selectedVariants[product.id] &&
+                      product.ProductVariants?.length > 0
+                    }
+                    className="mt-4 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {product?.stock > 0
-                      ? `Stock: ${product?.stock}`
-                      : "Out of Stock"}
-                  </p>
+                    Add to Cart
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -440,7 +540,7 @@ const POS: React.FC = () => {
                   className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg"
                 >
                   <img
-                    src={item.productImage}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-12 h-12 rounded object-cover"
                   />

@@ -2,7 +2,14 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaBox } from "react-icons/fa";
+import {
+  FaSearch,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaBox,
+  FaEye,
+} from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import {
   PRODUCT_URL,
@@ -19,6 +26,25 @@ import AddProduct from "@/components/shared/AddProduct";
 import { Product, ProductFormData } from "@/types/ProductType";
 import { Brand } from "@/types/categoryType";
 import { Category } from "@/types/categoryType";
+
+// Add this interface at the top
+interface ProductVariant {
+  id: number;
+  sku: string;
+  quantity: number;
+  alertQuantity: number;
+  imageUrl: string;
+  status: string;
+  ProductId: number;
+  ColorId: number;
+  SizeId: number;
+}
+
+// Add this interface for the view modal
+interface ViewModalProps {
+  product: Product;
+  onClose: () => void;
+}
 
 const Products: React.FC = () => {
   const queryClient = useQueryClient();
@@ -57,6 +83,11 @@ const Products: React.FC = () => {
 
   // Additional state
   const [imagePreview, setImagePreview] = useState<string>("");
+
+  // Add state for selected variant
+  const [selectedVariants, setSelectedVariants] = useState<
+    Record<number, number>
+  >({});
 
   // Queries
   const { data: products = [], isLoading: isLoadingProducts } = useQuery<
@@ -201,7 +232,105 @@ const Products: React.FC = () => {
     });
   };
 
-  // Keep your existing return JSX but update the products mapping
+  // Add this state for the view modal
+  const [viewProduct, setViewProduct] = useState<Product | null>(null);
+
+  // Add this component for the view modal
+  const ViewProductModal: React.FC<ViewModalProps> = ({ product, onClose }) => {
+    return (
+      <div className="space-y-6">
+        {/* Product Header */}
+        <div className="flex gap-6">
+          <div className="w-1/3">
+            <img
+              src={product.productImage}
+              alt={product.name}
+              className="w-full h-64 object-cover rounded-lg shadow-md"
+            />
+          </div>
+          <div className="flex-1 space-y-4">
+            <h2 className="text-2xl font-bold text-gray-800">{product.name}</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">SKU</p>
+                <p className="font-medium">{product.sku}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Category</p>
+                <p className="font-medium">{product.Category?.name}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Brand</p>
+                <p className="font-medium">{product.Brand?.name}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Status</p>
+                <span
+                  className={`px-2 py-1 rounded-full text-sm font-medium ${
+                    product.status === "active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {product.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Details */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">Description</h3>
+          <p className="text-gray-600">{product.description}</p>
+        </div>
+
+        {/* Variants Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800">
+            Product Variants
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {product.ProductVariants?.map((variant) => (
+              <div
+                key={variant.id}
+                className="bg-gray-50 rounded-lg p-4 space-y-3"
+              >
+                <div className="flex gap-4">
+                  <img
+                    src={variant.imageUrl}
+                    alt={`Variant ${variant.sku}`}
+                    className="w-20 h-20 object-cover rounded-md"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-800">
+                      SKU: {variant.sku}
+                    </h4>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Stock:</span>
+                        <span className="ml-2 font-medium">
+                          {variant.quantity}
+                        </span>
+                      </div>
+                      {/* <div>
+                        <span className="text-gray-500">Alert Qty:</span>
+                        <span className="ml-2 font-medium">
+                          {variant.alertQuantity}
+                        </span>
+                      </div> */}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Update the product card JSX
   return (
     <div className="bg-white rounded-lg shadow p-6">
       {/* Your existing filter UI */}
@@ -285,7 +414,7 @@ const Products: React.FC = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {isLoadingProducts ? (
           <div className="col-span-full flex justify-center py-8">
             <Spinner color="#32cd32" size="40px" />
@@ -298,128 +427,97 @@ const Products: React.FC = () => {
           filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group"
             >
               {/* Product Image Section */}
-              <div className="relative h-56">
+              <div className="relative aspect-square overflow-hidden">
                 <img
-                  src={product?.productImage}
-                  alt={product?.name}
+                  src={
+                    selectedVariants[product.id]
+                      ? product.ProductVariants.find(
+                          (v) => v.id === selectedVariants[product.id]
+                        )?.imageUrl
+                      : product.ProductVariants?.length > 0
+                      ? product.ProductVariants[0]?.imageUrl
+                      : product.productImage
+                  }
+                  alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Status Badge */}
-                <span
-                  className={`absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-full shadow-lg ${
-                    product.status === "active"
-                      ? "bg-green-500 text-white"
-                      : "bg-red-500 text-white"
-                  }`}
-                >
-                  {product?.status}
-                </span>
-
-                {/* Quick Action Buttons */}
-                <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Action Buttons Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setViewProduct(product)}
+                    className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                    title="View Details"
+                  >
+                    <FaEye className="w-5 h-5" />
+                  </button>
                   <button
                     onClick={() => handleEdit(product)}
-                    className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 shadow-lg transition-colors"
+                    className="p-2 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"
+                    title="Edit Product"
                   >
-                    <FaEdit className="w-4 h-4" />
+                    <FaEdit className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleDelete(product.id)}
-                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors"
+                    className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                    title="Delete Product"
                   >
-                    <FaTrash className="w-4 h-4" />
+                    <FaTrash className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              {/* Product Details Section */}
-              <div className="p-5">
-                {/* Header */}
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1 line-clamp-1">
-                    {product?.name}
+              {/* Product Details */}
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                    {product.name}
                   </h3>
-                  <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <FaBox className="w-4 h-4" />
-                    {product.sku}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      product.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {product.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    Category: {product.Category?.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Brand: {product.Brand?.name}
+                  </p>
+                  <p className="text-sm font-medium text-brand-primary">
+                    ${Number(product.price || 0).toFixed(2)}
                   </p>
                 </div>
 
-                {/* Description */}
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {product?.description}
-                </p>
-
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="text-gray-500 block text-xs">
-                      Category
-                    </span>
-                    <span className="font-medium text-gray-800">
-                      {product?.Category?.name}
-                    </span>
+                {/* Variant Preview */}
+                {product.ProductVariants?.length > 0 && (
+                  <div className="mt-3 flex -space-x-2">
+                    {product.ProductVariants.slice(0, 3).map((variant) => (
+                      <img
+                        key={variant.id}
+                        src={variant.imageUrl}
+                        alt={`Variant ${variant.sku}`}
+                        className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                      />
+                    ))}
+                    {product.ProductVariants.length > 3 && (
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs text-gray-600">
+                        +{product.ProductVariants.length - 3}
+                      </div>
+                    )}
                   </div>
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="text-gray-500 block text-xs">Brand</span>
-                    <span className="font-medium text-gray-800">
-                      {product?.Brand?.name}
-                    </span>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="text-gray-500 block text-xs">Unit</span>
-                    <span className="font-medium text-gray-800">
-                      {product?.Unit?.name}
-                    </span>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="text-gray-500 block text-xs">Stock</span>
-                    <span
-                      className={`font-medium ${
-                        product.stock <= product.alertQuantity
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {product?.stock}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Price Section */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <div>
-                    <span className="text-xs text-gray-500">Sales Price</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-brand-primary">
-                        ${Number(product?.price || 0)?.toFixed(2)}
-                      </span>
-                      {product?.discountAmount && (
-                        <span className="text-sm text-red-500 line-through">
-                          $
-                          {(() => {
-                            const salesPrice = Number(product?.salesPrice) || 0; // Ensure salesPrice is a number
-                            const vatPercentage = Number(product?.vat) || 0; // Ensure VAT is a number
-                            const vatAmount =
-                              (salesPrice * vatPercentage) / 100; // Calculate VAT
-                            return (salesPrice + vatAmount).toFixed(2); // Add VAT to salesPrice and format
-                          })()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-500">VAT</span>
-                    <p className="text-sm font-medium text-gray-600">
-                      {product.vat}%
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           ))
@@ -440,6 +538,21 @@ const Products: React.FC = () => {
           productData={formData}
           onClose={() => setIsModalOpen(false)}
         />
+      </Modal>
+
+      {/* View Product Modal */}
+      <Modal
+        isOpen={!!viewProduct}
+        onClose={() => setViewProduct(null)}
+        title="Product Details"
+        className="max-w-4xl"
+      >
+        {viewProduct && (
+          <ViewProductModal
+            product={viewProduct}
+            onClose={() => setViewProduct(null)}
+          />
+        )}
       </Modal>
     </div>
   );
