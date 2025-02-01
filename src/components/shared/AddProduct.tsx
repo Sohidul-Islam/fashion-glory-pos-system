@@ -36,6 +36,8 @@ function AddProduct({
 }) {
   const queryClient = useQueryClient();
 
+  const [enableVariants, setEnableVariants] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState<ProductFormData>(productData);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -437,18 +439,46 @@ function AddProduct({
 
         {/* Stock */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Stock*
-          </label>
-          <InputWithIcon
-            icon={FaBoxes}
-            name="stock"
-            type="number"
-            required
-            placeholder="Enter stock quantity"
-            value={formData.stock?.toString()}
-            onChange={handleInputChange}
-          />
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Stock Management
+            </label>
+            <div className="flex items-center">
+              <span className="text-sm text-gray-500 mr-2">Enable Variants</span>
+              <button
+                type="button"
+                onClick={() => setEnableVariants(!enableVariants)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  enableVariants ? 'bg-brand-primary' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    enableVariants ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {!enableVariants && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock*
+              </label>
+              <InputWithIcon
+                icon={FaBoxes}
+                name="stock"
+                type="number"
+                required
+                placeholder="Enter stock quantity"
+                value={formData.stock?.toString()}
+                onChange={handleInputChange}
+              />
+            </div>
+          )}
+
+          {enableVariants && <ProductVariantForm />}
         </div>
 
         <div>
