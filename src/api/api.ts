@@ -37,3 +37,9 @@ export const UPDATE_COLORS_URL = `${BASE_URL}/colors/update`;
 export const PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants`;
 export const DELETE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/delete`;
 export const UPDATE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/update`;
+
+
+// Order API
+export const ORDERS_URL = `${BASE_URL}/orders`;
+export const DELETE_ORDERS_URL = `${BASE_URL}/orders/delete`;
+export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;

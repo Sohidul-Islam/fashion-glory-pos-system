@@ -44,14 +44,14 @@ const Invoice: React.FC<InvoiceProps> = ({ orderData, onClose, onPrint }) => {
           </div>
 
           {/* Customer Info */}
-          {(orderData.customer.name || orderData.customer.phone) && (
+          {(orderData?.customer?.name || orderData?.customer?.phone) && (
             <div className="mb-6 text-sm">
               <h3 className="font-medium mb-2">Customer Information</h3>
-              {orderData.customer.name && (
-                <p>Name: {orderData.customer.name}</p>
+              {orderData?.customer?.name && (
+                <p>Name: {orderData?.customer?.name}</p>
               )}
-              {orderData.customer.phone && (
-                <p>Phone: {orderData.customer.phone}</p>
+              {orderData?.customer?.phone && (
+                <p>Phone: {orderData?.customer?.phone}</p>
               )}
             </div>
           )}
@@ -99,7 +99,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderData, onClose, onPrint }) => {
             </div>
             <div className="flex justify-between font-medium text-lg pt-2 border-t">
               <span>Total</span>
-              <span>${orderData.total.toFixed(2)}</span>
+              <span>${Number(orderData.total).toFixed(2)}</span>
             </div>
           </div>
 

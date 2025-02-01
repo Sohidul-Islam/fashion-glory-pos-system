@@ -13,7 +13,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
-import { PRODUCT_URL, CATEGORY_URL } from "@/api/api";
+import { PRODUCT_URL, CATEGORY_URL, ORDERS_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
 import ScrollButton from "@/components/ScrollButton";
 import Invoice from "@/components/Invoice";
@@ -273,6 +273,7 @@ const POS: React.FC = () => {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedVariants, setSelectedVariants] = useState<
     Record<number, number>
   >({});
@@ -415,7 +416,7 @@ const POS: React.FC = () => {
   // Add this mutation
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: OrderData) => {
-      const response = await AXIOS.post("/api/orders", orderData);
+      const response = await AXIOS.post(ORDERS_URL, orderData);
       return response.data;
     },
     onSuccess: (data) => {
@@ -434,10 +435,10 @@ const POS: React.FC = () => {
       return;
     }
 
-    if (!customerInfo.name || !customerInfo.phone) {
-      toast.warning("Please fill in customer information");
-      return;
-    }
+    // if (!customerInfo.name || !customerInfo.phone) {
+    //   toast.warning("Please fill in customer information");
+    //   return;
+    // }
 
     const orderData: OrderData = {
       orderId: generateOrderId(),
@@ -578,7 +579,7 @@ const POS: React.FC = () => {
 
         {/* Products Grid */}
         <div className="flex-1 p-4 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
@@ -602,10 +603,10 @@ const POS: React.FC = () => {
                 </div>
 
                 <div className="p-4">
-                  <h3 className="font-medium text-gray-900">{product.name}</h3>
+                  <h3 className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer" title={product.name}>{product.name}</h3>
 
                   {/* Variant Selection */}
-                  {product.ProductVariants?.length > 0 && (
+                  {/* {product.ProductVariants?.length > 0 && (
                     <div className="mt-3">
                       <label className="text-sm text-gray-600">
                         Select Variant
@@ -637,17 +638,17 @@ const POS: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Add to Cart Button */}
                   <button
                     type="button"
                     onClick={() => handleAddToCart(product)}
-                    disabled={
-                      !selectedVariants[product.id] &&
-                      product.ProductVariants?.length > 0
-                    }
-                    className="mt-4 w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                    // disabled={
+                    //   !selectedVariants[product.id] &&
+                    //   product.ProductVariants?.length > 0
+                    // }
+                    className="mt-4 w-full md:font-medium text-[14px] px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Add to Cart
                   </button>
