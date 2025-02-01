@@ -15,6 +15,8 @@ interface InvoiceProps {
       name: string;
       quantity: number;
       price: number;
+      size?: string;
+      variant?: string;
     }[];
     subtotal: number;
     tax: number;
@@ -70,7 +72,11 @@ const Invoice: React.FC<InvoiceProps> = ({ orderData, onClose, onPrint }) => {
               <tbody>
                 {orderData.items.map((item, index) => (
                   <tr key={index} className="border-b">
-                    <td className="py-2">{item.name}</td>
+                    <td className="py-2">
+                      {item?.name}
+                      {item?.size && ` - Size: ${item?.size}`}
+                      {item?.variant && ` - ${item?.variant}`}
+                    </td>
                     <td className="text-center py-2">{item.quantity}</td>
                     <td className="text-right py-2">
                       ${Number(item.price).toFixed(2)}
