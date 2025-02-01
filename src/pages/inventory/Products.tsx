@@ -379,7 +379,7 @@ const Products: React.FC = () => {
                             [product.id]: variant.id,
                           })
                         }
-                        className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                        className={`w-8 h-8 rounded-full border-2 border-white object-cover ${selectedVariants[product.id] === variant.id ? "border-brand-primary" : ""}`}
                       />
                     ))}
                     {product.ProductVariants.length > 3 && (
@@ -561,18 +561,18 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
           {product.ProductVariants?.map((variant) => (
             <div
               key={variant.id}
-              className="bg-white border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="bg-white  border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex gap-4">
-                <div className="relative group w-20 h-20">
+                <div className="relative group w-20 h-20 cursor-pointer">
                   <img
-                    src={variant.imageUrl}
+                    src={variant?.imageUrl || ""}
                     alt={`Variant ${variant.sku}`}
                     className="w-full h-full object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                     <a
-                      href={variant.imageUrl}
+                      href={variant?.imageUrl || ""}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 bg-white rounded-full hover:bg-brand-primary hover:text-white transition-colors"

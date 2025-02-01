@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaPlus, FaTimes, FaImage } from "react-icons/fa";
@@ -35,9 +36,13 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
 }) => {
   const [variants, setVariants] = useState<VariantFormData[]>([]);
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
+
+  const [isUplaodingImage, setIsUplaodingImage] = useState<{
+    [key: number]: boolean;
+  }>({});
 
   // Fetch colors and sizes
   const { data: colors = [] } = useQuery({
@@ -168,14 +173,21 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
   ) => {
     const newVariants = [...variants];
     newVariants[index] = { ...newVariants[index], [field]: value };
+    setIsUplaodingImage((prev) => ({ ...prev, [index]: false }));
     setVariants(newVariants);
   };
 
   const handleImageUpload = async (index: number, file: File) => {
-    const imageUrl = await uploadFile(file);
-    if (imageUrl) {
-      handleVariantChange(index, "imageUrl", imageUrl);
-      setImagePreview(imageUrl);
+    try {
+      setIsUplaodingImage((prev) => ({ ...prev, [index]: true }));
+      const imageUrl = await uploadFile(file);
+      if (imageUrl) {
+        handleVariantChange(index, "imageUrl", imageUrl);
+      }
+    } catch (error) {
+      toast.error("Error uploading image");
+    } finally {
+      setIsUplaodingImage((prev) => ({ ...prev, [index]: false }));
     }
   };
 
@@ -186,6 +198,8 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
       createVariantMutation.mutate(variant);
     }
   };
+
+  console.log({ isUplaodingImage });
 
   return (
     <div className="space-y-6">
@@ -246,10 +260,11 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                     </label>
                     <div className="flex items-center justify-center w-full">
                       <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        {imagePreview || variant.imageUrl ? (
+                      {isUplaodingImage[index] ? <Spinner size="32px" color="#32cd32" /> :  <>
+                      {variant.imageUrl ? (
                           <div className="relative group w-full h-full">
                             <img
-                              src={imagePreview || variant.imageUrl || ""}
+                              src={variant.imageUrl || ""}
                               alt="Variant preview"
                               className="mx-auto h-64 w-auto rounded-md object-cover"
                             />
@@ -271,6 +286,7 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                             </p>
                           </div>
                         )}
+                      </>}
                         <input
                           type="file"
                           className="hidden"
@@ -400,13 +416,15 @@ const ProductVariantForm: React.FC<ProductVariantFormProps> = ({
                     disabled={
                       createVariantMutation.isPending ||
                       updateVariantMutation.isPending ||
-                      deleteVariantMutation.isPending
+                      deleteVariantMutation.isPending ||
+                      isUplaodingImage[index]
                     }
                     className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover shadow-sm disabled:opacity-50"
                   >
                     {createVariantMutation.isPending ||
                     updateVariantMutation.isPending ||
-                    deleteVariantMutation.isPending ? (
+                    deleteVariantMutation.isPending ||
+                    isUplaodingImage[index] ? (
                       <Spinner size="16px" color="#ffffff" className="mr-4" />
                     ) : variant.id ? (
                       "Update Variant"
