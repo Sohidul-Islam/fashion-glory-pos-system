@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   BRANDS_URL,
   CATEGORY_URL,
   PRODUCT_URL,
+  PRODUCT_VARIANTS_URL,
   UNITS_URL,
   UPDATE_PRODUCT_URL,
 } from "@/api/api";
@@ -9,7 +11,7 @@ import {
 import AXIOS from "@/api/network/Axios";
 import { successToast, uploadFile } from "@/utils/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import InputWithIcon from "../InputWithIcon";
 import {
@@ -26,6 +28,7 @@ import { Category } from "@/types/categoryType";
 import Spinner from "../Spinner";
 import { ProductFormData } from "@/types/ProductType";
 import ProductVariantForm from "./ProductVariantForm";
+import ToggleSwitch from "./ToggleSwitch";
 
 function AddProduct({
   productData,
@@ -36,11 +39,16 @@ function AddProduct({
 }) {
   const queryClient = useQueryClient();
 
+
   const [enableVariants, setEnableVariants] = useState(false);
+
+
+  const [productId, setProductId] = useState<number | undefined>(productData.id);
 
   // Form state
   const [formData, setFormData] = useState<ProductFormData>(productData);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -68,16 +76,36 @@ function AddProduct({
   // Mutations
   const createMutation = useMutation<any, Error, ProductFormData>({
     mutationFn: (data: ProductFormData) => AXIOS.post(PRODUCT_URL, data),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product created successfully");
-      onClose();
-      resetForm();
+
+      if(data.status){
+        setProductId(data?.data?.id);
+      }
+      
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to create product");
     },
   });
+
+  const { data: existingVariants = [], isLoading: isLoadingVariants } =
+    useQuery({
+      queryKey: ["variants", productData.id],
+      queryFn: async () => {
+        if (!productData.id) return [];
+      const response = await AXIOS.get(PRODUCT_VARIANTS_URL, {
+        params: {
+          ProductId: productData.id,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!productData.id, // Only run query if productId exists
+  });
+
+
 
   const updateMutation = useMutation<
     any,
@@ -100,6 +128,7 @@ function AddProduct({
   // Handlers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoadingImage(true);
     try {
       let imageUrl = formData.productImage;
 
@@ -122,9 +151,9 @@ function AddProduct({
         productImage: imageUrl,
       };
 
-      if (formData.id) {
+      if (formData.id || productId) {
         updateMutation.mutate({
-          id: formData.id,
+          id: formData.id ?? productId!, // Use nullish coalescing and non-null assertion since we know one exists
           updates: submitData,
         });
       } else {
@@ -133,6 +162,8 @@ function AddProduct({
     } catch (error) {
       console.log(error);
       successToast("Failed to upload image", "error");
+    } finally {
+      setIsLoadingImage(false);
     }
   };
 
@@ -213,6 +244,24 @@ function AddProduct({
       reader.readAsDataURL(file);
     }
   };
+
+
+  useEffect(() => {
+    if (existingVariants?.length > 0) {
+      setFormData({
+        ...formData,
+        stock: 0,
+      });
+      setEnableVariants(true);
+    }
+  }, [existingVariants]);
+
+
+  if (isLoadingVariants) {
+    return <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
+      <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
+      </div>
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -422,7 +471,7 @@ function AddProduct({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm co font-medium text-gray-700 mb-1">
             Final Price*
           </label>
           <InputWithIcon
@@ -438,47 +487,45 @@ function AddProduct({
         </div>
 
         {/* Stock */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Stock Management
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stock{enableVariants ? "" : "*"}
             </label>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-2">Enable Variants</span>
-              <button
-                type="button"
-                onClick={() => setEnableVariants(!enableVariants)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  enableVariants ? 'bg-brand-primary' : 'bg-gray-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    enableVariants ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {!enableVariants && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock*
-              </label>
+            <div className="flex items-center gap-2">
               <InputWithIcon
                 icon={FaBoxes}
                 name="stock"
                 type="number"
-                required
+                required={!enableVariants}
+                disabled={enableVariants}
+                className="flex-1"
                 placeholder="Enter stock quantity"
+                buttonContainerClassName={`${existingVariants?.length<=0 ? "flex-1" :""}`}
                 value={formData.stock?.toString()}
                 onChange={handleInputChange}
               />
+              {(existingVariants)?.length<=0 && <div className="flex flex-col">
+                <ToggleSwitch
+                  enabled={enableVariants}
+                  onChange={() => {
+                    setFormData({
+                      ...formData,
+                      stock: 0,
+                    });
+                    setEnableVariants(!enableVariants);
+                  }}
+                  size="sm"
+                />
+                <span className="text-sm text-gray-500 mr-2">
+                  Enable Variants
+                </span>
+              </div>}
+            <div>
+           
             </div>
-          )}
-
-          {enableVariants && <ProductVariantForm />}
+            </div>
+          </div>
         </div>
 
         <div>
@@ -503,6 +550,7 @@ function AddProduct({
           <select
             value={formData.status}
             onChange={handleInputChange}
+            name="status"
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
             required
           >
@@ -518,7 +566,7 @@ function AddProduct({
         </label>
         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative hover:border-brand-primary transition-colors">
           <div className="space-y-1 text-center">
-            {imagePreview || formData.productImage ? (
+            {(imagePreview || formData.productImage) && !isLoadingImage ? (
               <div className="relative group">
                 <img
                   src={imagePreview || formData.productImage}
@@ -542,6 +590,10 @@ function AddProduct({
                   </button>
                 </div>
               </div>
+            ) : isLoadingImage ? (
+             <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
+             <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
+             </div>
             ) : (
               <>
                 <FaCloudUploadAlt className="mx-auto h-12 w-12 text-gray-400" />
@@ -571,14 +623,16 @@ function AddProduct({
         </div>
       </div>
       {/* Add Product Variant Form */}
-      <div className="mt-8 pt-8 border-t border-gray-200">
-        <ProductVariantForm
-          productId={productData?.id}
-          onSuccess={() => {
-            // Refresh product data or handle success
-          }}
-        />
-      </div>
+      {enableVariants && (
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <ProductVariantForm
+            productId={productId}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+            }}
+          />
+        </div>
+      )}
       {/* Form Actions */}
       <div className="flex justify-end gap-4 mt-6">
         <button
@@ -596,10 +650,10 @@ function AddProduct({
           className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
           disabled={createMutation.isPending || updateMutation.isPending}
         >
-          {createMutation.isPending || updateMutation.isPending ? (
+          {createMutation.isPending || updateMutation.isPending || isLoadingImage || isLoadingVariants ? (
             <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
           ) : (
-            <>{formData.id ? "Update" : "Create"} Product</>
+            <>{(formData.id||productId) ? "Update" : "Create"} Product</>
           )}
         </button>
       </div>

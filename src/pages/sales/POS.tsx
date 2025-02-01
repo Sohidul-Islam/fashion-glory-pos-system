@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -274,7 +273,6 @@ const POS: React.FC = () => {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderData | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedVariants, setSelectedVariants] = useState<
     Record<number, number>
   >({});
@@ -630,7 +628,7 @@ const POS: React.FC = () => {
                         <div className="flex items-center">
                           {product.ProductVariants.slice(0, 4).map((variant, index) => (
                             <div
-                              key={variant.id}
+                              key={index}
                               className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
                                 selectedVariants[product.id] === variant.id ? "z-10 ring-2 ring-brand-primary" : ""
                               }`}

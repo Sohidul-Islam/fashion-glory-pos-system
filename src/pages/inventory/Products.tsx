@@ -443,6 +443,10 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
     setSelectedSku({ sku, name, price });
   };
 
+  const calculateTotalStock = () => {
+    return product.ProductVariants?.reduce((acc, variant) => acc + variant.quantity, 0) || 0;
+  };
+
   return (
     <div className="space-y-8">
       {/* Product Header - Made responsive */}
@@ -497,7 +501,7 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               <div className="px-4 py-3 bg-gray-100 rounded-lg">
                 <p className="text-sm text-gray-600">Stock</p>
                 <p className="text-xl font-bold text-gray-800">
-                  {product.stock}
+                  {calculateTotalStock() || product.stock}
                 </p>
               </div>
             </div>
