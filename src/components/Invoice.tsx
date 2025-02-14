@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { FaPrint } from "react-icons/fa";
 import LogoSvg from "./icons/LogoSvg";
 import Barcode from "react-barcode";
@@ -8,6 +8,7 @@ import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
+import { useReactToPrint } from "react-to-print";
 
 interface InvoiceItem {
   productName: string;
@@ -61,7 +62,10 @@ interface InvoiceProps {
   onPrint: () => void;
 }
 
-const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
+const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const reactToPrintFn = useReactToPrint({ contentRef });
+
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
     queryFn: async () => {
@@ -86,8 +90,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
     );
   }
 
-  console.log({ invoiceData });
-
   if (!invoiceData) {
     return (
       <div className="text-center p-8">
@@ -105,7 +107,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
   return (
     <div className="flex items-center justify-center z-50">
       <div className="w-full">
-        <div className="p-6" id="invoice-print">
+        <div className="p-6" id="invoice-print" ref={contentRef}>
           {/* Business Info */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
@@ -232,7 +234,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
             Close
           </button>
           <button
-            onClick={onPrint}
+            onClick={() => reactToPrintFn()}
             className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2"
           >
             <FaPrint className="w-4 h-4" />

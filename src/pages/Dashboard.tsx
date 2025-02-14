@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -14,18 +15,45 @@ import {
   FaUsers,
   FaBoxOpen,
   FaChartLine,
+  FaCalendar,
 } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
+import { ORDERS_URL } from "@/api/api";
+import AXIOS from "@/api/network/Axios";
+import Spinner from "@/components/Spinner";
+
+interface DashboardStats {
+  totalSales: number;
+  totalOrders: number;
+  totalProfit: number;
+  totalLoss: number;
+  totalDiscount: number;
+  totalTax: number;
+}
+
+type ChartData = {
+  name: string; // e.g., "Feb 2025"
+  date: string; // e.g., "2025-02"
+  sales: number; // e.g., 3758.7
+  discounts: number; // e.g., 0
+  orderCount: number; // e.g., 3
+  tax: number; // e.g., 0
+  averageOrderValue: number; // e.g., 1252.9
+};
+
+// If you're working with an array of such data:
+type ChartDataArray = ChartData[];
 
 const Dashboard: React.FC = () => {
   // Sample data for charts
-  const salesData = [
-    { name: "Jan", sales: 4000 },
-    { name: "Feb", sales: 3000 },
-    { name: "Mar", sales: 5000 },
-    { name: "Apr", sales: 4500 },
-    { name: "May", sales: 6000 },
-    { name: "Jun", sales: 5500 },
-  ];
+  // const salesData = [
+  //   { name: "Jan", sales: 4000 },
+  //   { name: "Feb", sales: 3000 },
+  //   { name: "Mar", sales: 5000 },
+  //   { name: "Apr", sales: 4500 },
+  //   { name: "May", sales: 6000 },
+  //   { name: "Jun", sales: 5500 },
+  // ];
 
   const productData = [
     { name: "Electronics", value: 400 },
@@ -35,70 +63,157 @@ const Dashboard: React.FC = () => {
     { name: "Sports", value: 250 },
   ];
 
-  const stats = [
-    {
-      title: "Total Sales",
-      value: "$12,345",
-      change: "+12%",
-      icon: <FaChartLine className="w-6 h-6" />,
-      trend: "up",
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().setDate(new Date().getDate() - 7)) // Previous 7 days
+      .toISOString()
+      .split("T")[0],
+    endDate: new Date(new Date().setDate(new Date().getDate() + 1)) // next days
+      .toISOString()
+      .split("T")[0],
+  });
+
+  // Fetch dashboard stats
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats", dateRange],
+    queryFn: async () => {
+      const response = await AXIOS.get(
+        `${ORDERS_URL}/dashboard?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+      );
+      return response.data;
     },
-    {
-      title: "Total Orders",
-      value: "156",
-      change: "+8%",
-      icon: <FaShoppingCart className="w-6 h-6" />,
-      trend: "up",
-    },
-    {
-      title: "Total Customers",
-      value: "2,345",
-      change: "+23%",
-      icon: <FaUsers className="w-6 h-6" />,
-      trend: "up",
-    },
-    {
-      title: "Products Sold",
-      value: "1,234",
-      change: "-5%",
-      icon: <FaBoxOpen className="w-6 h-6" />,
-      trend: "down",
-    },
-  ];
+  });
+
+  const { data: chartsData, isLoading: chartsIsLoading } =
+    useQuery<ChartDataArray>({
+      queryKey: ["chart-stats", dateRange],
+      queryFn: async () => {
+        const response = await AXIOS.get(
+          `${ORDERS_URL}/report/chart/sales?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+        );
+        return response.data?.chartData;
+      },
+    });
+
+  if (isLoading || chartsIsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner color="#32cd32" size="40px" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Date Filter */}
+      <div className="mb-6 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <FaCalendar className="text-gray-500" />
+          <input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, startDate: e.target.value }))
+            }
+            className="border rounded-md px-3 py-2 text-sm"
+          />
+          <span className="text-gray-500">to</span>
+          <input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, endDate: e.target.value }))
+            }
+            className="border rounded-md px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-semibold mt-1">{stat.value}</p>
-              </div>
-              <div
-                className={`p-3 rounded-full ${
-                  stat.trend === "up"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-red-100 text-red-600"
-                }`}
-              >
-                {stat.icon}
-              </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Sales</p>
+              <p className="text-2xl font-semibold text-gray-800">
+                ${(stats?.totalSales || 0).toFixed(2)}
+              </p>
             </div>
-            <p
-              className={`mt-2 text-sm ${
-                stat.trend === "up" ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {stat.change} vs last month
-            </p>
+            <div className="p-3 bg-green-100 rounded-full">
+              <FaShoppingCart className="w-6 h-6 text-green-600" />
+            </div>
           </div>
-        ))}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Orders</p>
+              <p className="text-2xl font-semibold text-gray-800">
+                {stats?.totalOrders || 0}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <FaBoxOpen className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Profit</p>
+              <p className="text-2xl font-semibold text-gray-800">
+                ${(stats?.totalProfit || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <FaChartLine className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Loss</p>
+              <p className="text-2xl font-semibold text-red-600">
+                ${(stats?.totalLoss || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="p-3 bg-red-100 rounded-full">
+              <FaChartLine className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Discount</p>
+              <p className="text-2xl font-semibold text-orange-600">
+                ${(stats?.totalDiscount || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="p-3 bg-orange-100 rounded-full">
+              <FaUsers className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Tax</p>
+              <p className="text-2xl font-semibold text-indigo-600">
+                ${(stats?.totalTax || 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="p-3 bg-indigo-100 rounded-full">
+              <FaUsers className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts Grid */}
@@ -109,7 +224,12 @@ const Dashboard: React.FC = () => {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={salesData}
+                data={chartsData?.map((item) => ({
+                  name: item?.name,
+                  order: item?.orderCount,
+                  sales: item?.sales,
+                  averageOrderValue: item?.averageOrderValue,
+                }))}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
