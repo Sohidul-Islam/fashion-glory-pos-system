@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -190,7 +189,7 @@ const Colors = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-6 h-6 rounded border"
+                          className={`w-6 h-6 rounded border`}
                           style={{ backgroundColor: color.code }}
                         />
                         <span>{color.code}</span>
@@ -198,7 +197,7 @@ const Colors = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-gray-600 truncate max-w-md">
-                        {color.description}
+                        {color.description || "N/A"}
                       </p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -287,7 +286,7 @@ const Colors = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description*
+              Description
             </label>
             <textarea
               value={formData.description}
@@ -297,7 +296,7 @@ const Colors = () => {
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
               rows={3}
               placeholder="Enter color description"
-              required
+              // required
             />
           </div>
 

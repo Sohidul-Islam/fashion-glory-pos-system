@@ -1,5 +1,5 @@
-export const BASE_URL = "https://fashionglory-pos-server.onrender.com/api";
-// export const BASE_URL = "http://localhost:3000/api";
+// export const BASE_URL = "https://fashionglory-pos-server.onrender.com/api";
+export const BASE_URL = "http://localhost:3000/api";
 
 export const REGISTER_URL = `${BASE_URL}/register`;
 export const LOGIN_URL = `${BASE_URL}/login`;
@@ -37,7 +37,6 @@ export const UPDATE_COLORS_URL = `${BASE_URL}/colors/update`;
 export const PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants`;
 export const DELETE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/delete`;
 export const UPDATE_PRODUCT_VARIANTS_URL = `${BASE_URL}/product-variants/update`;
-
 
 // Order API
 export const ORDERS_URL = `${BASE_URL}/orders`;

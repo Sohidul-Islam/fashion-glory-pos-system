@@ -39,11 +39,11 @@ function AddProduct({
 }) {
   const queryClient = useQueryClient();
 
-
   const [enableVariants, setEnableVariants] = useState(false);
 
-
-  const [productId, setProductId] = useState<number | undefined>(productData.id);
+  const [productId, setProductId] = useState<number | undefined>(
+    productData.id
+  );
 
   // Form state
   const [formData, setFormData] = useState<ProductFormData>(productData);
@@ -80,10 +80,9 @@ function AddProduct({
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product created successfully");
 
-      if(data.status){
+      if (data.status) {
         setProductId(data?.data?.id);
       }
-      
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to create product");
@@ -95,17 +94,15 @@ function AddProduct({
       queryKey: ["variants", productData.id],
       queryFn: async () => {
         if (!productData.id) return [];
-      const response = await AXIOS.get(PRODUCT_VARIANTS_URL, {
-        params: {
-          ProductId: productData.id,
-        },
-      });
-      return response.data;
-    },
-    enabled: !!productData.id, // Only run query if productId exists
-  });
-
-
+        const response = await AXIOS.get(PRODUCT_VARIANTS_URL, {
+          params: {
+            ProductId: productData.id,
+          },
+        });
+        return response.data;
+      },
+      enabled: !!productData.id, // Only run query if productId exists
+    });
 
   const updateMutation = useMutation<
     any,
@@ -132,7 +129,9 @@ function AddProduct({
     try {
       let imageUrl = formData.productImage;
 
-      if (formData?.salesPrice < formData?.purchasePrice) {
+      console.log({ formData });
+
+      if (Number(formData?.salesPrice) < Number(formData?.purchasePrice)) {
         successToast("Sales price cannot be less than purchase price", "error");
         return;
       }
@@ -245,7 +244,6 @@ function AddProduct({
     }
   };
 
-
   useEffect(() => {
     if (existingVariants?.length > 0) {
       setFormData({
@@ -256,11 +254,12 @@ function AddProduct({
     }
   }, [existingVariants]);
 
-
   if (isLoadingVariants) {
-    return <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
-      <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
+    return (
+      <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
+        <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
       </div>
+    );
   }
 
   return (
@@ -501,29 +500,31 @@ function AddProduct({
                 disabled={enableVariants}
                 className="flex-1"
                 placeholder="Enter stock quantity"
-                buttonContainerClassName={`${existingVariants?.length<=0 ? "flex-1" :""}`}
+                buttonContainerClassName={`${
+                  existingVariants?.length <= 0 ? "flex-1" : ""
+                }`}
                 value={formData.stock?.toString()}
                 onChange={handleInputChange}
               />
-              {(existingVariants)?.length<=0 && <div className="flex flex-col">
-                <ToggleSwitch
-                  enabled={enableVariants}
-                  onChange={() => {
-                    setFormData({
-                      ...formData,
-                      stock: 0,
-                    });
-                    setEnableVariants(!enableVariants);
-                  }}
-                  size="sm"
-                />
-                <span className="text-sm text-gray-500 mr-2">
-                  Enable Variants
-                </span>
-              </div>}
-            <div>
-           
-            </div>
+              {existingVariants?.length <= 0 && (
+                <div className="flex flex-col">
+                  <ToggleSwitch
+                    enabled={enableVariants}
+                    onChange={() => {
+                      setFormData({
+                        ...formData,
+                        stock: 0,
+                      });
+                      setEnableVariants(!enableVariants);
+                    }}
+                    size="sm"
+                  />
+                  <span className="text-sm text-gray-500 mr-2">
+                    Enable Variants
+                  </span>
+                </div>
+              )}
+              <div></div>
             </div>
           </div>
         </div>
@@ -591,9 +592,9 @@ function AddProduct({
                 </div>
               </div>
             ) : isLoadingImage ? (
-             <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
-             <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
-             </div>
+              <div className="flex items-center justify-center h-64 w-auto rounded-md object-cover">
+                <Spinner size="32px" color="#32cd32" className="mx-4 my-1" />
+              </div>
             ) : (
               <>
                 <FaCloudUploadAlt className="mx-auto h-12 w-12 text-gray-400" />
@@ -650,10 +651,13 @@ function AddProduct({
           className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover flex items-center gap-2"
           disabled={createMutation.isPending || updateMutation.isPending}
         >
-          {createMutation.isPending || updateMutation.isPending || isLoadingImage || isLoadingVariants ? (
+          {createMutation.isPending ||
+          updateMutation.isPending ||
+          isLoadingImage ||
+          isLoadingVariants ? (
             <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
           ) : (
-            <>{(formData.id||productId) ? "Update" : "Create"} Product</>
+            <>{formData.id || productId ? "Update" : "Create"} Product</>
           )}
         </button>
       </div>

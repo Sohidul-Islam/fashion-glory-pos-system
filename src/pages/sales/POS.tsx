@@ -18,15 +18,10 @@ import Spinner from "@/components/Spinner";
 import ScrollButton from "@/components/ScrollButton";
 import Invoice from "@/components/Invoice";
 import { successToast } from "@/utils/utils";
-import {
-  generateOrderId,
-  generateVerificationCode,
-  getExpiryDate,
-} from "@/utils/utils";
 import Modal from "@/components/Modal";
 import { ProductVariant } from "@/types/ProductType";
 import { toast } from "react-toastify";
-import { Size } from "@/types/categoryType";
+import { Size, Unit } from "@/types/categoryType";
 import { Color } from "@/types/categoryType";
 
 interface Product {
@@ -36,6 +31,7 @@ interface Product {
   productImage: string;
   CategoryId: number;
   stock: number;
+  Unit: Unit;
   Category: {
     id: number;
     name: string;
@@ -57,6 +53,7 @@ interface Product {
 
 interface CartItem extends Product {
   quantity: number;
+  unit: Unit;
   selectedVariant?: {
     id: number;
     sku: string;
@@ -277,6 +274,9 @@ const POS: React.FC = () => {
     Record<number, number>
   >({});
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "cash" | "card"
+  >("cash");
 
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
@@ -344,13 +344,13 @@ const POS: React.FC = () => {
     }
   };
 
-  const updateQuantity = (productId: number, change: number) => {
+  const updateQuantity = (cartItemId: string, change: number) => {
     setCart((prevCart) =>
       prevCart
         .map((item) => {
-          if (item.id === productId) {
+          if (item.cartItemId === cartItemId) {
             const newQuantity = item.quantity + change;
-            if (newQuantity > item.stock) {
+            if (newQuantity > (item.selectedVariant?.quantity || item.stock)) {
               successToast("Cannot add more than available stock", "warn");
               return item;
             }
@@ -414,7 +414,23 @@ const POS: React.FC = () => {
 
   // Add this mutation
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: OrderData) => {
+    mutationFn: async (cartItems: CartItem[]) => {
+      const orderData = {
+        items: cartItems.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          // Include variantId if a variant is selected
+          ...(item.selectedVariant && { variantId: item.selectedVariant.id }),
+        })),
+        customerName: customerInfo.name || "Walk-in Customer",
+        phone: customerInfo.phone || "",
+        address: "", // Add address field if needed
+        email: "", // Add email field if needed
+        paymentStatus: "completed",
+        paymentMethod: selectedPaymentMethod,
+        orderStatus: "completed",
+      };
+
       const response = await AXIOS.post(ORDERS_URL, orderData);
       return response.data;
     },
@@ -429,30 +445,12 @@ const POS: React.FC = () => {
 
   // Add these handlers
   const handlePayment = (method: "cash" | "card") => {
+    setSelectedPaymentMethod(method);
     if (cart.length === 0) {
-      toast.warning("Cart is empty");
+      toast.error("Cart is empty");
       return;
     }
-
-    // if (!customerInfo.name || !customerInfo.phone) {
-    //   toast.warning("Please fill in customer information");
-    //   return;
-    // }
-
-    const orderData: OrderData = {
-      orderId: generateOrderId(),
-      date: new Date().toISOString(),
-      customer: customerInfo,
-      items: cart,
-      subtotal,
-      tax,
-      total,
-      paymentMethod: method,
-      verificationCode: generateVerificationCode(),
-      expiryDate: getExpiryDate(new Date().toISOString()),
-    };
-
-    createOrderMutation.mutate(orderData);
+    createOrderMutation.mutate(cart);
   };
 
   const handlePrintInvoice = () => {
@@ -477,6 +475,7 @@ const POS: React.FC = () => {
         imageUrl: product.productImage,
         quantity: 1,
         sku: "", // Added missing 'sku' property
+        unit: product,
       });
     }
   };
@@ -487,6 +486,7 @@ const POS: React.FC = () => {
 
     addToCart({
       ...variantProduct,
+      unit: variantProduct.Unit,
       selectedVariant: variant,
       cartItemId: `${variantProduct.id}-${variant.id}`,
       imageUrl: variant.imageUrl,
@@ -499,7 +499,10 @@ const POS: React.FC = () => {
   // Add this helper function
   const getTotalStock = (product: Product) => {
     if (product.ProductVariants?.length > 0) {
-      return product.ProductVariants.reduce((total, variant) => total + variant.quantity, 0);
+      return product.ProductVariants.reduce(
+        (total, variant) => total + variant.quantity,
+        0
+      );
     }
     return product.stock;
   };
@@ -611,10 +614,13 @@ const POS: React.FC = () => {
 
                 {/* Product Card Content */}
                 <div className="p-4">
-                  <h3 className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer" title={product.name}>
+                  <h3
+                    className="font-medium text-gray-900 line-clamp-1 text-ellipsis cursor-pointer"
+                    title={product.name}
+                  >
                     {product.name}
                   </h3>
-                  
+
                   {/* Price */}
                   <div className="mt-1 text-brand-primary font-medium">
                     ${Number(product.price).toFixed(2)}
@@ -624,32 +630,44 @@ const POS: React.FC = () => {
                   {product.ProductVariants?.length > 0 && (
                     <div className="mt-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">Available variants:</span>
+                        <span className="text-xs text-gray-500">
+                          Available variants:
+                        </span>
                         <div className="flex items-center">
-                          {product.ProductVariants.slice(0, 4).map((variant, index) => (
-                            <div
-                              key={index}
-                              className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
-                                selectedVariants[product.id] === variant.id ? "z-10 ring-2 ring-brand-primary" : ""
-                              }`}
-                            >
-                              <img
-                                src={variant.imageUrl}
-                                alt={`${variant.Color?.name} ${variant.Size?.name}`}
-                                onClick={() => setSelectedVariants({ [product.id]: variant.id })}
-                                className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm"
-                              />
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
-                                {variant.Color?.name} - {variant.Size?.name}
+                          {product.ProductVariants.slice(0, 4).map(
+                            (variant, index) => (
+                              <div
+                                key={index}
+                                className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
+                                  selectedVariants[product.id] === variant.id
+                                    ? "z-10 ring-2 ring-brand-primary"
+                                    : ""
+                                }`}
+                              >
+                                <img
+                                  src={variant.imageUrl}
+                                  alt={`${variant.Color?.name} ${variant.Size?.name}`}
+                                  onClick={() =>
+                                    setSelectedVariants({
+                                      [product.id]: variant.id,
+                                    })
+                                  }
+                                  className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm"
+                                />
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+                                  {variant.Color?.name} - {variant.Size?.name}
+                                </div>
+                                {/* Stock Badge */}
+                                {variant.quantity < 5 && (
+                                  <span
+                                    className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border border-white rounded-full"
+                                    title={`Only ${variant.quantity} left`}
+                                  />
+                                )}
                               </div>
-                              {/* Stock Badge */}
-                              {variant.quantity < 5 && (
-                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border border-white rounded-full" 
-                                      title={`Only ${variant.quantity} left`}/>
-                              )}
-                            </div>
-                          ))}
+                            )
+                          )}
                           {product.ProductVariants.length > 4 && (
                             <div className="relative -ml-1 group cursor-pointer">
                               <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-100">
@@ -657,19 +675,25 @@ const POS: React.FC = () => {
                               </div>
                               {/* Tooltip */}
                               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                                {product.ProductVariants.length - 4} more variants
+                                {product.ProductVariants.length - 4} more
+                                variants
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Stock Status */}
                       <div className="mt-2 flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${
-                          getTotalStock(product) > 10 ? 'bg-green-500' : 
-                          getTotalStock(product) > 5 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}/>
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            getTotalStock(product) > 10
+                              ? "bg-green-500"
+                              : getTotalStock(product) > 5
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                          }`}
+                        />
                         <span className="text-xs text-gray-500">
                           {getTotalStock(product)} in stock
                         </span>
@@ -766,14 +790,14 @@ const POS: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => updateQuantity(item.id, -1)}
+                      onClick={() => updateQuantity(item?.cartItemId, -1)}
                       className="p-1 hover:bg-gray-200 rounded"
                     >
                       <FaMinus className="w-3 h-3" />
                     </button>
                     <span className="w-8 text-center">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.id, 1)}
+                      onClick={() => updateQuantity(item?.cartItemId, 1)}
                       className="p-1 hover:bg-gray-200 rounded"
                     >
                       <FaPlus className="w-3 h-3" />
@@ -858,7 +882,7 @@ const POS: React.FC = () => {
         onClose={() => setShowInvoice(false)}
       >
         <Invoice
-          orderData={currentOrder}
+          orderId={Number(currentOrder?.orderId)}
           onClose={() => {
             setShowInvoice(false);
             setCart([]);

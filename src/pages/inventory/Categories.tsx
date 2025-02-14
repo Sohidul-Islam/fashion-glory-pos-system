@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -197,7 +196,7 @@ const Categories = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-gray-600 truncate max-w-md">
-                        {category.description}
+                        {category.description || "N/A"}
                       </p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -270,7 +269,7 @@ const Categories = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description*
+                  Description
                 </label>
                 <textarea
                   value={formData.description}
@@ -280,7 +279,7 @@ const Categories = () => {
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
                   rows={3}
                   placeholder="Enter category description"
-                  required
+                  // required
                 />
               </div>
 
