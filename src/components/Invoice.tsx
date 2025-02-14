@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { FaPrint } from "react-icons/fa";
 import LogoSvg from "./icons/LogoSvg";
 import Barcode from "react-barcode";
@@ -58,10 +58,11 @@ interface InvoiceData {
 interface InvoiceProps {
   orderId: number;
   onClose: () => void;
-  onPrint: () => void;
+  onPrint?: () => void;
 }
 
 const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
+  const printRef = useRef<HTMLDivElement>(null);
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
     queryFn: async () => {
@@ -76,6 +77,97 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
     enabled: !!orderId,
   });
 
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+
+    const printStyles = `
+      @page {
+        size: 80mm 297mm;
+        margin: 0;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        .invoice-print {
+          width: 80mm;
+          padding: 5mm;
+          page-break-after: always;
+        }
+        .no-print {
+          display: none !important;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        td, th {
+          padding: 2px;
+          font-size: 12px;
+        }
+        .text-xs {
+          font-size: 10px;
+        }
+        .border-t {
+          border-top: 1px dashed #ccc;
+        }
+        .border-b {
+          border-bottom: 1px dashed #ccc;
+        }
+      }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = printStyles;
+    document.head.appendChild(styleSheet);
+
+    const printWindow = window.open("", "", "height=600,width=800");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Invoice</title>
+            <style>${printStyles}</style>
+          </head>
+          <body>
+            <div class="invoice-print">
+              ${printContent.innerHTML}
+            </div>
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+
+      // Print after images are loaded
+      const images = printWindow.document.getElementsByTagName("img");
+      let loadedImages = 0;
+      const totalImages = images.length;
+
+      if (totalImages === 0) {
+        printWindow.print();
+        printWindow.close();
+      } else {
+        Array.from(images).forEach((img) => {
+          img.onload = () => {
+            loadedImages++;
+            if (loadedImages === totalImages) {
+              printWindow.print();
+              printWindow.close();
+            }
+          };
+        });
+      }
+    }
+
+    document.head.removeChild(styleSheet);
+    onPrint?.();
+  };
+
   if (!orderId) return null;
 
   if (isLoading) {
@@ -85,8 +177,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
       </div>
     );
   }
-
-  console.log({ invoiceData });
 
   if (!invoiceData) {
     return (
@@ -104,72 +194,72 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
 
   return (
     <div className="flex items-center justify-center z-50">
-      <div className="w-full">
-        <div className="p-6" id="invoice-print">
-          {/* Business Info */}
-          <div className="text-center mb-6">
-            <div className="flex justify-center mb-4">
-              <LogoSvg className="h-12" />
+      <div className="w-full max-w-[80mm]">
+        {/* Print Preview */}
+        <div ref={printRef} className="p-4" id="invoice-print">
+          {/* Header */}
+          <div className="text-center mb-4">
+            <div className="flex justify-center mb-2">
+              <LogoSvg className="h-8" />
             </div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-sm font-semibold">
               {invoiceData.businessInfo.name}
             </h2>
-            <p className="text-gray-500 text-sm">
+            <p className="text-xs text-gray-500">
               {invoiceData.businessInfo.address}
             </p>
-            <p className="text-gray-500 text-sm">
-              Tel: {invoiceData.businessInfo.phone} | Email:{" "}
-              {invoiceData.businessInfo.email}
+            <p className="text-xs text-gray-500">
+              Tel: {invoiceData.businessInfo.phone}
             </p>
-            <p className="text-gray-500 text-sm mt-2">
-              Invoice #{invoiceData.invoiceNumber} •{" "}
-              {new Date(invoiceData.date).toLocaleString()}
-            </p>
+          </div>
+
+          {/* Invoice Details */}
+          <div className="text-xs mb-4">
+            <div className="flex justify-between">
+              <span>Invoice #:</span>
+              <span>{invoiceData.invoiceNumber}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Date:</span>
+              <span>{new Date(invoiceData.date).toLocaleString()}</span>
+            </div>
           </div>
 
           {/* Customer Info */}
-          <div className="mb-6 text-sm">
-            <h3 className="font-medium mb-2">Customer Information</h3>
-            <p>Name: {invoiceData.customer.name}</p>
+          <div className="text-xs mb-4">
+            <p>Customer: {invoiceData.customer.name}</p>
             <p>Phone: {invoiceData.customer.phone}</p>
-            {invoiceData.customer.email !== "N/A" && (
-              <p>Email: {invoiceData.customer.email}</p>
-            )}
           </div>
 
           {/* Items */}
-          <div className="mb-6">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">Item</th>
-                  <th className="text-center py-2">Qty</th>
-                  <th className="text-right py-2">Price</th>
-                  <th className="text-right py-2">Total</th>
+          <table className="w-full text-xs mb-4">
+            <thead className="border-t border-b">
+              <tr>
+                <th className="text-left py-1">Item</th>
+                <th className="text-center py-1">Qty</th>
+                <th className="text-right py-1">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoiceData.items.map((item, index) => (
+                <tr key={index} className="border-b">
+                  <td className="py-1">
+                    <div>
+                      <p>{item.productName}</p>
+                      <p className="text-[10px] text-gray-500">
+                        {item.details}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="text-center py-1">{item.quantity}</td>
+                  <td className="text-right py-1">${item.subtotal}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {invoiceData.items.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2">
-                      <div>
-                        <p className="font-medium">{item.productName}</p>
-                        <p className="text-xs text-gray-500">
-                          SKU: {item.sku} | {item.details}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="text-center py-2">{item.quantity}</td>
-                    <td className="text-right py-2">${item.unitPrice}</td>
-                    <td className="text-right py-2">${item.subtotal}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
 
           {/* Summary */}
-          <div className="space-y-2 text-sm">
+          <div className="text-xs space-y-1 border-t pt-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>${invoiceData.summary.subtotal}</span>
@@ -181,59 +271,56 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose, onPrint }) => {
               </div>
             )}
             {Number(invoiceData.summary.discount) > 0 && (
-              <div className="flex justify-between text-red-600">
+              <div className="flex justify-between">
                 <span>Discount ({invoiceData.summary.discountRate})</span>
                 <span>-${invoiceData.summary.discount}</span>
               </div>
             )}
-            <div className="flex justify-between font-medium text-lg pt-2 border-t">
+            <div className="flex justify-between font-bold pt-1 border-t">
               <span>Total</span>
               <span>${invoiceData.summary.total}</span>
             </div>
           </div>
 
           {/* Payment Info */}
-          <div className="mt-6 pt-4 border-t text-center text-sm text-gray-500">
+          <div className="mt-4 text-center text-xs">
             <p>Paid via {invoiceData.payment.method.toUpperCase()}</p>
             <p className="mt-1">
               Status: {invoiceData.payment.status.toUpperCase()}
             </p>
-            <p className="mt-2">Thank you for your business!</p>
           </div>
 
           {/* Barcode */}
-          <div className="mt-6 flex flex-col items-center justify-center border-t pt-4">
+          <div className="mt-4 flex justify-center">
             <Barcode
               value={invoiceData.invoiceNumber}
-              width={1.5}
-              height={50}
-              fontSize={12}
+              width={1}
+              height={40}
+              fontSize={10}
               margin={0}
               displayValue={true}
             />
           </div>
 
-          {/* Business Details */}
-          <div className="mt-4 text-center text-xs text-gray-500">
-            <p>Tax ID: {invoiceData.businessInfo.taxId}</p>
+          {/* Footer */}
+          <div className="mt-4 text-center text-[10px] text-gray-500">
+            <p>Thank you for your business!</p>
             <p>{invoiceData.businessInfo.website}</p>
-            <p className="mt-1">
-              Valid until: {getExpiryDate(invoiceData.date)}
-            </p>
+            <p>Valid until: {getExpiryDate(invoiceData.date)}</p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="border-t px-6 py-4 flex justify-end gap-4">
+        {/* Actions - No Print */}
+        <div className="border-t px-4 py-3 flex justify-end gap-3 no-print">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
           >
             Close
           </button>
           <button
-            onClick={onPrint}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2"
+            onClick={handlePrint}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-brand-primary hover:bg-brand-hover rounded-md flex items-center gap-2"
           >
             <FaPrint className="w-4 h-4" />
             Print
