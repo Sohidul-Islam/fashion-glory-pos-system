@@ -66,11 +66,15 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
+  console.log({ orderId });
+
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
     queryFn: async () => {
       try {
-        const response = await AXIOS.get(`${ORDERS_URL}/${orderId}/invoice`);
+        const response = await AXIOS.get(
+          `${ORDERS_URL}/${Number(orderId || 0)}/invoice`
+        );
         return response.data;
       } catch (error: any) {
         toast.error(error?.message || "Failed to fetch invoice");

@@ -44,6 +44,15 @@ type ChartData = {
 // If you're working with an array of such data:
 type ChartDataArray = ChartData[];
 
+interface TopProduct {
+  name: string;
+  sku: string;
+  totalQuantity: number;
+  totalRevenue: number;
+  profit: number;
+  averagePrice: string;
+}
+
 const Dashboard: React.FC = () => {
   // Sample data for charts
   // const salesData = [
@@ -93,6 +102,14 @@ const Dashboard: React.FC = () => {
         return response.data?.chartData;
       },
     });
+
+  const { data: topProducts } = useQuery<TopProduct[]>({
+    queryKey: ["top-products"],
+    queryFn: async () => {
+      const response = await AXIOS.get(`${ORDERS_URL}/report/top-items`);
+      return response.data;
+    },
+  });
 
   if (isLoading || chartsIsLoading) {
     return (
@@ -268,29 +285,75 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-        <div className="space-y-4">
-          {[1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="flex items-center justify-between py-3 border-b last:border-0"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-brand-primary/10 rounded-full">
-                  <FaShoppingCart className="w-4 h-4 text-brand-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">New order #{item}000</p>
-                  <p className="text-xs text-gray-500">2 minutes ago</p>
-                </div>
-              </div>
-              <span className="text-sm font-medium text-brand-primary">
-                $199.99
-              </span>
-            </div>
-          ))}
+      {/* Top Products */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4">Top Selling Products</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  SKU
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Quantity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Revenue
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Avg. Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Profit
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {topProducts?.map((product, index) => (
+                <tr
+                  key={product.sku}
+                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{product.sku}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {product.totalQuantity}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      ${product.totalRevenue.toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      ${product.averagePrice}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div
+                      className={`text-sm ${
+                        product.profit >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      ${product.profit.toFixed(2)}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

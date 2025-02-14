@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FaSearch,
   FaShoppingCart,
@@ -71,7 +71,7 @@ interface CartItem extends Product {
 }
 
 interface OrderData {
-  orderId: string;
+  id: number;
   date: string;
   customer: {
     name: string;
@@ -278,6 +278,8 @@ const POS: React.FC = () => {
     "cash" | "card"
   >("cash");
 
+  const queryClient = useQueryClient();
+
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButtons, setShowScrollButtons] = useState({
     left: false,
@@ -437,6 +439,8 @@ const POS: React.FC = () => {
     onSuccess: (data) => {
       setCurrentOrder(data);
       setShowInvoice(true);
+      setCart([]);
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to create order");
@@ -839,16 +843,27 @@ const POS: React.FC = () => {
               className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-hover"
               disabled={createOrderMutation.isPending}
             >
-              <FaCreditCard />
-              <span>Card</span>
+              {createOrderMutation?.isPending ? (
+                <Spinner size="16px" />
+              ) : (
+                <>
+                  <FaCreditCard /> <span>Card</span>
+                </>
+              )}
             </button>
             <button
               onClick={() => handlePayment("cash")}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
               disabled={createOrderMutation.isPending}
             >
-              <FaMoneyBill />
-              <span>Cash</span>
+              {createOrderMutation?.isPending ? (
+                <Spinner size="16px" />
+              ) : (
+                <>
+                  <FaMoneyBill />
+                  <span>Cash</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -882,7 +897,7 @@ const POS: React.FC = () => {
         onClose={() => setShowInvoice(false)}
       >
         <Invoice
-          orderId={Number(currentOrder?.orderId)}
+          orderId={Number(currentOrder?.id || 0)}
           onClose={() => {
             setShowInvoice(false);
             setCart([]);
