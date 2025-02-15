@@ -441,6 +441,7 @@ const POS: React.FC = () => {
       setShowInvoice(true);
       setCart([]);
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to create order");
@@ -633,7 +634,7 @@ const POS: React.FC = () => {
                   {/* Improved Variant Preview */}
                   {product.ProductVariants?.length > 0 && (
                     <div className="mt-3">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-col items-start gap-1.5">
                         <span className="text-xs text-gray-500">
                           Available variants:
                         </span>
@@ -644,7 +645,7 @@ const POS: React.FC = () => {
                                 key={index}
                                 className={`relative -ml-1 first:ml-0 group cursor-pointer transition-transform hover:scale-110 hover:z-10 ${
                                   selectedVariants[product.id] === variant.id
-                                    ? "z-10 ring-2 ring-brand-primary"
+                                    ? "z-10 ring-2 rounded-full ring-brand-primary"
                                     : ""
                                 }`}
                               >
@@ -686,24 +687,23 @@ const POS: React.FC = () => {
                           )}
                         </div>
                       </div>
-
-                      {/* Stock Status */}
-                      <div className="mt-2 flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            getTotalStock(product) > 10
-                              ? "bg-green-500"
-                              : getTotalStock(product) > 5
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                          }`}
-                        />
-                        <span className="text-xs text-gray-500">
-                          {getTotalStock(product)} in stock
-                        </span>
-                      </div>
                     </div>
                   )}
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        getTotalStock(product) > 10
+                          ? "bg-green-500"
+                          : getTotalStock(product) > 5
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                      }`}
+                    />
+                    <span className="text-xs text-gray-500">
+                      {getTotalStock(product)} in stock
+                    </span>
+                  </div>
 
                   {/* Add to Cart Button */}
                   <button

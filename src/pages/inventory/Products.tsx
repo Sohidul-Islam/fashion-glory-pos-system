@@ -58,6 +58,8 @@ const Products: React.FC = () => {
     CategoryId: 0,
     BrandId: 0,
     UnitId: 0,
+    ColorId: 0,
+    SizeId:0,
     alertQuantity: 0,
     productImage: "",
     discountType: null,
@@ -147,6 +149,8 @@ const Products: React.FC = () => {
       CategoryId: product.CategoryId,
       BrandId: product.BrandId,
       UnitId: product.UnitId,
+      SizeId:product.SizeId,
+      ColorId:product.ColorId,
       alertQuantity: product.alertQuantity,
       productImage: product.productImage || "",
       discountType: product.discountType,
@@ -178,6 +182,8 @@ const Products: React.FC = () => {
       CategoryId: 0,
       BrandId: 0,
       UnitId: 0,
+      SizeId:0,
+      ColorId:0,
       alertQuantity: 0,
       productImage: "",
       discountType: null,
@@ -534,6 +540,22 @@ export const ViewProductModal: React.FC<ViewModalProps> = ({ product }) => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Brand</p>
                 <p className="font-medium truncate">{product.Brand?.name}</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">Color</p>
+                <p className="font-medium truncate">
+                  {product.ProductVariants?.length > 0 
+                    ? [...new Set(product.ProductVariants.map(item => item?.Color?.name))].join(", ")
+                    : product.Color?.name}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">Size</p>
+                <p className="font-medium truncate">
+                  {product.ProductVariants?.length > 0 
+                    ? [...new Set(product.ProductVariants.map(item => item?.Size?.name))].join(", ")
+                    : product.Size?.name}
+                </p>
               </div>
             </div>
           </div>
