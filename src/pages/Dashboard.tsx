@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  // BarChart,
+  // Bar,
 } from "recharts";
 import {
   FaShoppingCart,
@@ -64,13 +64,13 @@ const Dashboard: React.FC = () => {
   //   { name: "Jun", sales: 5500 },
   // ];
 
-  const productData = [
-    { name: "Electronics", value: 400 },
-    { name: "Clothing", value: 300 },
-    { name: "Books", value: 200 },
-    { name: "Food", value: 350 },
-    { name: "Sports", value: 250 },
-  ];
+  // const productData = [
+  //   { name: "Electronics", value: 400 },
+  //   { name: "Clothing", value: 300 },
+  //   { name: "Books", value: 200 },
+  //   { name: "Food", value: 350 },
+  //   { name: "Sports", value: 250 },
+  // ];
 
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)) // Previous 7 days
@@ -234,7 +234,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Sales Trend Chart */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">Sales Trend</h2>
@@ -266,7 +266,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Product Categories Chart */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        {/* <div className="bg-white rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">Product Categories</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -282,7 +282,7 @@ const Dashboard: React.FC = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Top Products */}
