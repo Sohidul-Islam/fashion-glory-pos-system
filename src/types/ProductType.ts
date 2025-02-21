@@ -11,6 +11,8 @@ export interface ProductFormData {
   CategoryId: number;
   BrandId: number;
   UnitId: number;
+  ColorId?:number;
+  SizeId?:number;
   alertQuantity: number;
   productImage: string;
   discountType: string | null;
@@ -47,6 +49,10 @@ export interface Product {
   CategoryId: number;
   BrandId: number;
   UnitId: number;
+  ColorId:number;
+  SizeId: number;
+  Size:Size;
+  Color:Color;
   alertQuantity: number;
   productImage: string;
   discountType: string | null;

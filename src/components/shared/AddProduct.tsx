@@ -2,8 +2,10 @@
 import {
   BRANDS_URL,
   CATEGORY_URL,
+  COLORS_URL,
   PRODUCT_URL,
   PRODUCT_VARIANTS_URL,
+  SIZES_URL,
   UNITS_URL,
   UPDATE_PRODUCT_URL,
 } from "@/api/api";
@@ -60,6 +62,8 @@ function AddProduct({
       CategoryId: 0,
       BrandId: 0,
       UnitId: 0,
+      SizeId: 0,
+      ColorId: 0,
       alertQuantity: 0,
       productImage: "",
       discountType: null,
@@ -73,11 +77,29 @@ function AddProduct({
     });
   };
 
+  // Fetch colors and sizes
+  const { data: colors = [] } = useQuery({
+    queryKey: ["colors"],
+    queryFn: async () => {
+      const response = await AXIOS.get(COLORS_URL);
+      return response.data;
+    },
+  });
+
+  const { data: sizes = [] } = useQuery({
+    queryKey: ["sizes"],
+    queryFn: async () => {
+      const response = await AXIOS.get(SIZES_URL);
+      return response.data;
+    },
+  });
+
   // Mutations
   const createMutation = useMutation<any, Error, ProductFormData>({
     mutationFn: (data: ProductFormData) => AXIOS.post(PRODUCT_URL, data),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
       toast.success("Product created successfully");
 
       if (data.status) {
@@ -113,6 +135,7 @@ function AddProduct({
       AXIOS.post(`${UPDATE_PRODUCT_URL}/${data.id}`, data.updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
       toast.success("Product updated successfully");
       onClose();
       resetForm();
@@ -147,6 +170,8 @@ function AddProduct({
 
       const submitData = {
         ...formData,
+        ColorId: Number(formData?.ColorId) >0 ? Number(formData?.ColorId): undefined,
+        SizeId: Number(formData?.SizeId) >0 ? Number(formData?.SizeId): undefined,
         productImage: imageUrl,
       };
 
@@ -201,7 +226,7 @@ function AddProduct({
         // Apply VAT
         const finalPrice = discountedPrice + (discountedPrice * vat) / 100;
 
-        updatedData.price = Math.max(finalPrice, 0); // Ensure price is not negative
+        updatedData.price = Math.max(Number((finalPrice).toFixed(2)), 0); // Ensure price is not negative
       }
 
       return updatedData;
@@ -380,6 +405,54 @@ function AddProduct({
             {units.map((unit) => (
               <option key={unit.id} value={unit.id}>
                 {unit.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Color */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Color
+          </label>
+          <select
+            value={formData.ColorId}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                ColorId: e.target.value ? Number(e.target.value) : 0,
+              })
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary"
+          >
+            <option value="">Select Color</option>
+            {colors.map((color: any) => (
+              <option key={color.id} value={color.id}>
+                {color.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Size */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Size
+          </label>
+          <select
+            value={formData.SizeId}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                SizeId: e.target.value ? Number(e.target.value) : 0,
+              })
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary"
+          >
+            <option value="">Select Size</option>
+            {sizes.map((size: any) => (
+              <option key={size.id} value={size.id}>
+                {size.name}
               </option>
             ))}
           </select>
