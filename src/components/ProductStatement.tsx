@@ -13,6 +13,7 @@ interface StatementItem {
   unitPrice: string;
   purchasePrice: string;
   subtotal: string;
+  tax: string;
   ProductId: number;
   ProductVariantId: number | null;
   Product: {
@@ -33,6 +34,8 @@ interface StatementItem {
     orderDate: string;
     customerName: string;
     total: string;
+    subtotal: string;
+    tax: string;
     paymentMethod: string;
     paymentStatus: string;
   };
@@ -87,11 +90,20 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
   // Calculate summary
   const summary = statementData?.reduce(
     (acc: any, item: StatementItem) => {
-      const cost = Number(item.purchasePrice) * item.quantity;
+      const cost = Number(item.purchasePrice) * Number(item.quantity); // Ensure numbers
       const sales = Number(item.subtotal);
       const profit = sales - cost;
 
+      const orderTax = Number(item?.Order?.tax) || 0; // Default to 0 if undefined
+      const orderSubtotal = Number(item?.Order?.subtotal) || 1; // Avoid division by 0
+      const itemSubtotal = Number(item?.subtotal) || 0;
+
+      const tax = Number(
+        (orderTax * (itemSubtotal / orderSubtotal) || 0).toFixed(2)
+      );
+
       acc.totalSales += sales;
+      acc.totalTax += tax;
       if (profit >= 0) {
         acc.totalProfit += profit;
       } else {
@@ -99,7 +111,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
       }
       return acc;
     },
-    { totalSales: 0, totalProfit: 0, totalLoss: 0 }
+    { totalSales: 0, totalProfit: 0, totalLoss: 0, totalTax: 0 }
   );
 
   // Handle print
@@ -148,12 +160,12 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-3 gap-4 mb-6 print:gap-8">
+              <div className="grid grid-cols-4 gap-4 mb-6 print:gap-8">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-blue-700">
                     Total Sales
                   </h3>
-                  <p className="text-2xl font-bold text-blue-800">
+                  <p className="text-2xl print:!text-base font-bold text-blue-800">
                     ${summary?.totalSales.toFixed(2) || "0.00"}
                   </p>
                 </div>
@@ -161,7 +173,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                   <h3 className="text-sm font-medium text-green-700">
                     Total Profit
                   </h3>
-                  <p className="text-2xl font-bold text-green-800">
+                  <p className="text-2xl print:!text-base font-bold text-green-800">
                     ${summary?.totalProfit.toFixed(2) || "0.00"}
                   </p>
                 </div>
@@ -169,8 +181,16 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                   <h3 className="text-sm font-medium text-red-700">
                     Total Loss
                   </h3>
-                  <p className="text-2xl font-bold text-red-800">
+                  <p className="text-2xl print:!text-base font-bold text-red-800">
                     ${summary?.totalLoss.toFixed(2) || "0.00"}
+                  </p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-purple-700">
+                    Total Tax
+                  </h3>
+                  <p className="text-2xl print:!text-base font-bold text-purple-800">
+                    ${summary?.totalTax.toFixed(2) || "0.00"}
                   </p>
                 </div>
               </div>
