@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaEye, FaFilter } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { ORDERS_URL } from "@/api/api";
-
+import Pagination from "@/components/Pagination";
 import { toast } from "react-toastify";
 import Modal from "@/components/Modal";
 import Invoice from "@/components/Invoice";
+import { BiSpreadsheet } from "react-icons/bi";
 
 interface OrderItem {
   id: number;
@@ -81,7 +82,7 @@ const Orders: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterParams>({
     page: 1,
-    pageSize: 1,
+    pageSize: 20,
   });
 
   // Fetch Orders
@@ -160,6 +161,12 @@ const Orders: React.FC = () => {
             className="p-2 border rounded-lg hover:bg-gray-50"
           >
             <FaFilter className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="p-2 border rounded-lg hover:bg-gray-50"
+          >
+            <BiSpreadsheet className="w-5 h-5 text-gray-600" />
           </button>
         </div>
       </div>
@@ -336,48 +343,16 @@ const Orders: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {ordersData?.pagination && (
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600">
-            Showing {(filters.page - 1) * filters.pageSize + 1} to{" "}
-            {Math.min(
-              filters.page * filters.pageSize,
-              ordersData.pagination.totalItems
-            )}{" "}
-            of {ordersData.pagination.totalItems} orders
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePageChange(filters.page - 1)}
-              disabled={!ordersData.pagination.hasPreviousPage}
-              className="px-3 py-1 border rounded hover:bg-gray-50 hover:text-brand-primary disabled:opacity-50"
-            >
-              Previous
-            </button>
-            {Array.from(
-              { length: ordersData.pagination.totalPages },
-              (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 border rounded hover:bg-gray-50 hover:text-brand-primary ${
-                    filters.page === i + 1 ? "bg-brand-primary text-white" : ""
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => handlePageChange(filters.page + 1)}
-              disabled={!ordersData.pagination.hasNextPage}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+
+      <Pagination
+        currentPage={filters.page}
+        totalPages={ordersData?.pagination.totalPages || 1}
+        totalItems={ordersData?.pagination.totalItems || 1}
+        pageSize={filters.pageSize || 10}
+        hasNextPage={ordersData?.pagination.hasNextPage || false}
+        hasPreviousPage={ordersData?.pagination.hasPreviousPage || false}
+        onPageChange={handlePageChange}
+      />
 
       {/* Invoice Modal */}
       <Modal
