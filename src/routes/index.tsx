@@ -21,6 +21,7 @@ import Units from "../pages/inventory/Units";
 import Sizes from "../pages/inventory/Sizes";
 import Colors from "../pages/inventory/Colors";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -37,6 +38,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route
         path="/"

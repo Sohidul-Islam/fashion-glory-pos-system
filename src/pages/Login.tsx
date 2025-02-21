@@ -84,12 +84,12 @@ const Login: React.FC = () => {
           </div>
 
           {/* Forgot Password Link */}
-          <div className="text-right">
+          <div className="text-sm">
             <Link
               to="/forgot-password"
-              className="text-sm text-brand-primary hover:text-brand-hover"
+              className="font-medium text-brand-primary hover:text-brand-hover"
             >
-              Forgot password?
+              Forgot your password?
             </Link>
           </div>
 
