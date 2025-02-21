@@ -185,3 +185,52 @@ button:focus-visible {
     box-shadow: 0 0 0 calc(var(--loader-size, 32px) * 0.3125) inset; /* Dynamic shadow */
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+
+  .print\:text-\[8pt\] {
+    font-size: 8pt !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:px-1 {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  .print\:w-1\/4 {
+    width: 25% !important;
+  }
+
+  .print\:gap-8 {
+    gap: 2rem !important;
+  }
+
+  .print\:bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+
+  .print\:border-t {
+    border-top-width: 1px !important;
+  }
+}

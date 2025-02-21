@@ -66,8 +66,6 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
-  console.log({ orderId });
-
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
     queryFn: async () => {

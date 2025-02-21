@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import Modal from "@/components/Modal";
 import Invoice from "@/components/Invoice";
 import { BiSpreadsheet } from "react-icons/bi";
+import ProductStatement from "@/components/ProductStatement";
 
 interface OrderItem {
   id: number;
@@ -84,6 +85,8 @@ const Orders: React.FC = () => {
     page: 1,
     pageSize: 20,
   });
+
+  const [isOpen, setIsOpen] = useState(false);
 
   // Fetch Orders
   const {
@@ -163,7 +166,10 @@ const Orders: React.FC = () => {
             <FaFilter className="w-5 h-5 text-gray-600" />
           </button>
           <button
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => {
+              setShowFilters(!showFilters);
+              setIsOpen(true);
+            }}
             className="p-2 border rounded-lg hover:bg-gray-50"
           >
             <BiSpreadsheet className="w-5 h-5 text-gray-600" />
@@ -375,6 +381,15 @@ const Orders: React.FC = () => {
           />
         )}
       </Modal>
+
+      <ProductStatement
+        isOpen={isOpen}
+        startDate={filters?.startDate}
+        endDate={filters?.endDate}
+        onClose={() => {
+          setIsOpen(false);
+        }}
+      />
     </div>
   );
 };
