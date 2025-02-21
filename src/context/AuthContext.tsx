@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import {
   createContext,
   useContext,
@@ -16,6 +14,8 @@ import { getCookiesAsObject } from "@/utils/cookies";
 
 interface User {
   email: string;
+  accountType?: "super admin" | "admin" | "default";
+  id?: number;
   // Add other user properties as needed
 }
 

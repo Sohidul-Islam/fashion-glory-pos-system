@@ -12,8 +12,9 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 interface InputWithIconProps extends InputHTMLAttributes<HTMLInputElement> {
   icon: IconType | ComponentType<SVGProps<SVGSVGElement>> | ReactNode;
   name: string;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   type?: string;
   required?: boolean;
@@ -25,6 +26,7 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   icon: Icon,
   name,
   value,
+  defaultValue,
   onChange,
   placeholder,
   type = "text",
@@ -58,6 +60,7 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        defaultValue={defaultValue}
         {...props}
       />
 

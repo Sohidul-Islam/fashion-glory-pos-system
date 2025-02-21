@@ -92,11 +92,17 @@ export const menuItems = [
     ],
   },
   {
-    id: "customers",
-    title: "Customers",
-    path: "/customers",
+    id: "users",
+    title: "Users",
+    path: "/users",
     icon: <FaUsers className="w-5 h-5" />,
   },
+  // {
+  //   id: "customers",
+  //   title: "Customers",
+  //   path: "/customers",
+  //   icon: <FaUsers className="w-5 h-5" />,
+  // },
   {
     id: "reports",
     title: "Reports",

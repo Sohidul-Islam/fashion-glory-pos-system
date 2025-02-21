@@ -23,6 +23,7 @@ import Colors from "../pages/inventory/Colors";
 import VerifyEmail from "@/pages/auth/VerifyEmail";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
+import Users from "@/pages/users/Users";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -75,6 +76,7 @@ const AppRoutes = () => {
         <Route path="purchase" element={<Purchase />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="users" element={<Users />} />
       </Route>
     </Routes>
   );
