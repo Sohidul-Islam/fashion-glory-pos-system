@@ -152,8 +152,6 @@ function AddProduct({
     try {
       let imageUrl = formData.productImage;
 
-      console.log({ formData });
-
       if (Number(formData?.salesPrice) < Number(formData?.purchasePrice)) {
         successToast("Sales price cannot be less than purchase price", "error");
         return;

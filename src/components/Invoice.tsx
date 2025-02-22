@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { FaPrint } from "react-icons/fa";
-import LogoSvg from "./icons/LogoSvg";
+// import LogoSvg from "./icons/LogoSvg";
 import Barcode from "react-barcode";
 import { getExpiryDate } from "@/utils/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
+// import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
   productName: string;
@@ -66,6 +67,8 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
+    // const auth = useAuth();
+
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
     queryFn: async () => {
@@ -113,7 +116,17 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           {/* Business Info */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              <LogoSvg className="h-12" />
+              {/* <LogoSvg className="h-12" /> */}
+             {/* <div>
+             <div className="border border-[#2CC56F] p-2 mb-2 line inline-block rounded-md">
+               <p className="text-3xl text-[#2CC56F]  font-bold">
+                  {auth?.user?.businessName}
+                </p>
+                </div>
+                <p className="text-md text-gray-600">
+                  {auth?.user?.email}
+                </p>
+             </div> */}
             </div>
             <h2 className="text-xl font-semibold">
               {invoiceData.businessInfo.name}

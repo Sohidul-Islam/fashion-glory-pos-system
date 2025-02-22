@@ -4,8 +4,9 @@ import Modal from "./Modal";
 import AXIOS from "@/api/network/Axios";
 import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
-import LogoSvg from "./icons/LogoSvg";
+// import LogoSvg from "./icons/LogoSvg";
 import Spinner from "./Spinner";
+import { useAuth } from "@/context/AuthContext";
 
 interface StatementItem {
   id: number;
@@ -57,6 +58,8 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
   endDate,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+
+  const auth = useAuth();
 
   // Fetch statement data
   const { data: statementData, isLoading } = useQuery({
@@ -149,7 +152,15 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
             <div className="print:!p-0">
               {/* Header */}
               <div className="text-center mb-6">
-                <LogoSvg className="h-12 mx-auto mb-4" />
+                {/* <LogoSvg className="h-12 mx-auto mb-4" /> */}
+               <div className="border border-[#2CC56F] p-2 mb-2 line inline-block rounded-md">
+               <p className="text-3xl text-[#2CC56F]  font-bold">
+                  {auth?.user?.businessName}
+                </p>
+                </div>
+                <p className="text-md text-gray-600">
+                  {auth?.user?.email}
+                </p>
                 <h2 className="text-2xl font-bold">Product Statement</h2>
                 {startDate && endDate && (
                   <p className="text-gray-600 text-sm">
@@ -299,17 +310,17 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
                       <td colSpan={3} className="px-4 py-2 text-right">
                         Totals:
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="pl-4 pr-2 py-2 text-right">
                         {totals?.quantity || 0}
                       </td>
                       <td className="px-4 py-2"></td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="pl-4 pr-2 py-2 text-right">
                         ${totals?.cost.toFixed(2) || "0.00"}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="pl-4 pr-2 py-2 text-right">
                         ${totals?.sales.toFixed(2) || "0.00"}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="pl-4 pr-2 py-2 text-right">
                         <span
                           className={
                             totals?.sales - totals?.cost >= 0

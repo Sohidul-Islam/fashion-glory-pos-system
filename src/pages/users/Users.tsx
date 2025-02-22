@@ -384,7 +384,7 @@ const Users = () => {
                   name="accountStatus"
                   defaultValue={selectedUser.accountStatus}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                  className="mt-1 border rounded-md p-2 block w-full border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -398,7 +398,7 @@ const Users = () => {
                   name="accountType"
                   defaultValue={selectedUser.accountType}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                  className="mt-1 block border p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
                 >
                   <option value="super admin">Super Admin</option>
                   <option value="admin">Admin</option>

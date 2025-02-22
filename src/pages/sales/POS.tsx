@@ -895,6 +895,7 @@ const POS: React.FC = () => {
         title="Invoice"
         isOpen={showInvoice}
         onClose={() => setShowInvoice(false)}
+        className="!max-w-[90vw] lg:!max-w-4xl"
       >
         <Invoice
           orderId={Number(currentOrder?.id || 0)}

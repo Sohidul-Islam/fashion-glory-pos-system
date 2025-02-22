@@ -16,6 +16,7 @@ interface User {
   email: string;
   accountType?: "super admin" | "admin" | "default";
   id?: number;
+  businessName?: string;
   // Add other user properties as needed
 }
 

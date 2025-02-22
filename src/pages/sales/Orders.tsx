@@ -368,7 +368,7 @@ const Orders: React.FC = () => {
           setSelectedOrder(null);
         }}
         title="Order Invoice"
-        className="max-w-4xl"
+        className="!max-w-[90vw] lg:!max-w-4xl"
       >
         {selectedOrder && (
           <Invoice
