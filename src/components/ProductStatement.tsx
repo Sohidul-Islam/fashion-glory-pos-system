@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useQuery } from "@tanstack/react-query";
 import { FaPrint } from "react-icons/fa";
 import Modal from "./Modal";
@@ -7,7 +6,7 @@ import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
 // import LogoSvg from "./icons/LogoSvg";
 import Spinner from "./Spinner";
-import { useAuth } from "@/context/AuthContext";
+
 import LogoSvg from "./icons/LogoSvg";
 
 interface StatementItem {
