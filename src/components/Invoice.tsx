@@ -9,6 +9,7 @@ import { ORDERS_URL } from "@/api/api";
 import Spinner from "./Spinner";
 import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
+import LogoSvg from "./icons/LogoSvg";
 // import { useAuth } from "@/context/AuthContext";
 
 interface InvoiceItem {
