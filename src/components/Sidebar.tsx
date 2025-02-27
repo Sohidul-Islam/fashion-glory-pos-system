@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   return (
     <div className="h-screen bg-white shadow-lg w-sidebar">
       <div className="h-16 flex items-center justify-center border-b">
-        <LogoSvg className="h-[40px]" />
+        <LogoSvg className="h-[90px]" />
       </div>
 
       <nav className="mt-4 h-[calc(100vh-4rem)] overflow-y-auto">

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, FormEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
@@ -81,7 +80,7 @@ const Register: React.FC = () => {
       <div className="max-w-2xl w-full space-y-8 bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl">
         {/* Logo */}
         <div className="text-center">
-          <LogoSvg className="h-12 w-auto mx-auto transition-transform duration-200 hover:scale-110" />
+          <LogoSvg className="h-[90px] w-auto mx-auto transition-transform duration-200 hover:scale-110" />
         </div>
 
         {/* Title */}

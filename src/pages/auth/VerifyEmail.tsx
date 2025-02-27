@@ -47,7 +47,7 @@ const VerifyEmail = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
-          <LogoSvg className="h-12 mx-auto mb-4" />
+          <LogoSvg className="h-[90px] mx-auto mb-4" />
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Email Verification
           </h2>

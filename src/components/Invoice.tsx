@@ -67,7 +67,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
-    // const auth = useAuth();
+  // const auth = useAuth();
 
   const { data: invoiceData, isLoading } = useQuery<InvoiceData>({
     queryKey: ["invoice", orderId],
@@ -116,17 +116,7 @@ const Invoice: React.FC<InvoiceProps> = ({ orderId, onClose }) => {
           {/* Business Info */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              {/* <LogoSvg className="h-12" /> */}
-             {/* <div>
-             <div className="border border-[#2CC56F] p-2 mb-2 line inline-block rounded-md">
-               <p className="text-3xl text-[#2CC56F]  font-bold">
-                  {auth?.user?.businessName}
-                </p>
-                </div>
-                <p className="text-md text-gray-600">
-                  {auth?.user?.email}
-                </p>
-             </div> */}
+              <LogoSvg className="h-[90px]" />
             </div>
             <h2 className="text-xl font-semibold">
               {invoiceData.businessInfo.name}

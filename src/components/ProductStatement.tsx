@@ -152,15 +152,7 @@ const ProductStatement: React.FC<ProductStatementProps> = ({
             <div className="print:!p-0">
               {/* Header */}
               <div className="text-center mb-6">
-                {/* <LogoSvg className="h-12 mx-auto mb-4" /> */}
-               <div className="border border-[#2CC56F] p-2 mb-2 line inline-block rounded-md">
-               <p className="text-3xl text-[#2CC56F]  font-bold">
-                  {auth?.user?.businessName}
-                </p>
-                </div>
-                <p className="text-md text-gray-600">
-                  {auth?.user?.email}
-                </p>
+                <LogoSvg className="h-[90px] mx-auto mb-4" />
                 <h2 className="text-2xl font-bold">Product Statement</h2>
                 {startDate && endDate && (
                   <p className="text-gray-600 text-sm">
