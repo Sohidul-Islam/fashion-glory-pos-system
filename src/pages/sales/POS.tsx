@@ -521,11 +521,11 @@ const POS: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-5rem)] flex flex-col md:flex-row gap-6 relative">
+    <div className=" flex flex-col lg:flex-row gap-6 relative">
       {/* Products Section */}
       <div
-        className={`flex-1 flex flex-col bg-white rounded-lg shadow overflow-hidden ${
-          showMobileCart ? "hidden md:flex" : "flex"
+        className={`flex-1 flex flex-col  bg-white rounded-lg shadow overflow-hidden ${
+          showMobileCart ? "hidden xl:flex" : "flex"
         }`}
       >
         {/* Search and Categories */}
@@ -593,8 +593,8 @@ const POS: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <div className={`flex-1 p-4 overflow-y-auto `}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
@@ -722,12 +722,12 @@ const POS: React.FC = () => {
 
       {/* Cart Section - Desktop */}
       <div
-        className={`w-96 bg-white rounded-lg shadow flex flex-col md:flex ${
+        className={` bg-white rounded-lg shadow flex flex-col xl:flex ${
           showMobileCart ? "flex" : "hidden"
         }`}
       >
         {/* Mobile Cart Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b">
+        <div className="xl:hidden flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold text-lg">Shopping Cart</h2>
           <button
             onClick={() => setShowMobileCart(false)}
@@ -877,7 +877,7 @@ const POS: React.FC = () => {
       {/* Mobile Cart Toggle Button */}
       <button
         onClick={() => setShowMobileCart(true)}
-        className={`md:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${
+        className={`xl:hidden fixed bottom-4 right-4 bg-brand-primary text-white p-4 rounded-full shadow-lg ${
           showMobileCart ? "hidden" : "flex"
         } items-center justify-center`}
       >

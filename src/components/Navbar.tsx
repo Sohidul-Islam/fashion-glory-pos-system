@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import {
-  FaBars,
-  FaBell,
-  FaUser,
-  FaSearch,
-  FaCog,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import { FaBars, FaBell, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import AXIOS from "@/api/network/Axios";
+import LogoSvg from "./icons/LogoSvg";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -66,14 +60,13 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           <FaBars className="h-5 w-5 text-gray-500" />
         </button>
 
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-10 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary w-64"
-          />
-          <FaSearch className="absolute left-4 text-gray-400 h-4 w-4" />
+        {/* console name */}
+
+        <div className="flex items-center">
+          {user?.accountType === "shop" && <LogoSvg height={"80"} />}
+          <p className="text-base md:text-lg font-semibold">
+            {user?.accountType === "shop" ? "Shop Console" : "Admin Console"}
+          </p>
         </div>
       </div>
 
