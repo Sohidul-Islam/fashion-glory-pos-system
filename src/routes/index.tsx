@@ -26,6 +26,7 @@ import ResetPassword from "@/pages/auth/ResetPassword";
 import Users from "@/pages/users/Users";
 import NotFound from "@/pages/NotFound";
 import AuthorizedRoute from "../components/AuthorizedRoute";
+import SubscriptionPlans from "@/pages/admin/SubscriptionPlans";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -83,6 +84,7 @@ const AppRoutes = () => {
         {/* Admin Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
           <Route path="users" element={<Users />} />
+          <Route path="subscriptions" element={<SubscriptionPlans />} />
         </Route>
 
         {/* 404 Route */}

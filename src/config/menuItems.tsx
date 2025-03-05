@@ -12,6 +12,7 @@ import {
   FaRuler,
   FaPalette,
   FaRulerHorizontal,
+  FaCrown,
 } from "react-icons/fa";
 
 export const menuItems = [
@@ -150,6 +151,13 @@ export const adminMenuItems = [
     title: "Users",
     path: "/users",
     icon: <FaUsers className="w-5 h-5" />,
+  },
+
+  {
+    id: "subscriptions",
+    title: "Subscriptions",
+    path: "/subscriptions",
+    icon: <FaCrown className="w-5 h-5" />,
   },
 
   // {
