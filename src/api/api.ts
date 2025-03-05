@@ -47,3 +47,7 @@ export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;
 export const SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans`;
 export const DELETE_SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans/delete`;
 export const SUBSCRIBE_PLAN = `${BASE_URL}/subscription/subscribe`;
+
+// Coupon API
+export const COUPONS_URL = `${BASE_URL}/coupons`;
+export const DELETE_COUPON_URL = `${BASE_URL}/coupons/delete`;
