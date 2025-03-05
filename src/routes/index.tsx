@@ -82,9 +82,15 @@ const AppRoutes = () => {
         </Route>
 
         {/* Admin Only Routes */}
+        <Route
+          element={<AuthorizedRoute allowedRoles={["super admin", "shop"]} />}
+        >
+          <Route path="subscriptions" element={<SubscriptionPlans />} />
+        </Route>
+
+        {/* Super Admin Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
           <Route path="users" element={<Users />} />
-          <Route path="subscriptions" element={<SubscriptionPlans />} />
         </Route>
 
         {/* 404 Route */}

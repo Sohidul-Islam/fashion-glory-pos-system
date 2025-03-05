@@ -111,6 +111,12 @@ export const menuItems = [
     icon: <FaChartBar className="w-5 h-5" />,
   },
   {
+    id: "subscriptions",
+    title: "Subscriptions",
+    path: "/subscriptions",
+    icon: <FaCrown className="w-5 h-5" />,
+  },
+  {
     id: "settings",
     title: "Settings",
     path: "/settings",

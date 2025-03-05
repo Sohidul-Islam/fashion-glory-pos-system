@@ -5,8 +5,13 @@ import { FaPlus, FaEdit, FaTrash, FaCrown } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
-import { SUBSCRIPTION_PLAN, DELETE_SUBSCRIPTION_PLAN } from "@/api/api";
+import {
+  SUBSCRIPTION_PLAN,
+  DELETE_SUBSCRIPTION_PLAN,
+  SUBSCRIBE_PLAN,
+} from "@/api/api";
 import InputWithIcon from "@/components/InputWithIcon";
+import { useAuth } from "@/context/AuthContext";
 
 interface SubscriptionPlan {
   id: number;
@@ -32,6 +37,14 @@ interface PlanFormData {
   maxProducts: number;
   maxUsers: number;
   status: "active" | "inactive";
+}
+
+interface SubscribePayload {
+  planId: number;
+  status: "active";
+  paymentStatus: "pending";
+  paymentMethod: "card";
+  amount: number;
 }
 
 const formatStorageSize = (size: string): string => {
@@ -74,6 +87,8 @@ const SubscriptionPlans = () => {
     maxUsers: 1,
     status: "active",
   });
+  const { user } = useAuth();
+  const isShopUser = user?.accountType === "shop";
 
   // Fetch Plans
   const { data: plans = [], isLoading } = useQuery({
@@ -127,6 +142,19 @@ const SubscriptionPlans = () => {
     },
   });
 
+  // Add subscription mutation
+  const subscribeMutation = useMutation({
+    mutationFn: (payload: SubscribePayload) =>
+      AXIOS.post(SUBSCRIBE_PLAN, payload),
+    onSuccess: () => {
+      toast.success("Subscription initiated successfully");
+      // Optionally redirect to payment page or show payment modal
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to subscribe to plan");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.id) {
@@ -175,6 +203,17 @@ const SubscriptionPlans = () => {
     }
   };
 
+  const handleSubscribe = (plan: SubscriptionPlan) => {
+    const payload: SubscribePayload = {
+      planId: plan.id,
+      status: "active",
+      paymentStatus: "pending",
+      paymentMethod: "card",
+      amount: plan.price,
+    };
+    subscribeMutation.mutate(payload);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -188,16 +227,18 @@ const SubscriptionPlans = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Subscription Plans</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Plan</span>
-        </button>
+        {!isShopUser && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-hover"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Plan</span>
+          </button>
+        )}
       </div>
 
       {/* Plans Grid */}
@@ -216,21 +257,41 @@ const SubscriptionPlans = () => {
                   <p className="text-gray-500 mt-1">{plan.description}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setFormData(plan);
-                      setIsModalOpen(true);
-                    }}
-                    className="p-2 text-gray-600 hover:text-brand-primary"
-                  >
-                    <FaEdit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(plan)}
-                    className="p-2 text-gray-600 hover:text-red-500"
-                  >
-                    <FaTrash className="w-4 h-4" />
-                  </button>
+                  {isShopUser ? (
+                    <button
+                      onClick={() => handleSubscribe(plan)}
+                      disabled={subscribeMutation.isPending}
+                      className="p-2 text-gray-600 hover:text-brand-primary"
+                    >
+                      {subscribeMutation.isPending ? (
+                        <Spinner
+                          size="16px"
+                          color="#ffffff"
+                          className="mx-auto"
+                        />
+                      ) : (
+                        "Subscribe"
+                      )}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setFormData(plan);
+                          setIsModalOpen(true);
+                        }}
+                        className="p-2 text-gray-600 hover:text-brand-primary"
+                      >
+                        <FaEdit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(plan)}
+                        className="p-2 text-gray-600 hover:text-red-500"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
