@@ -44,5 +44,5 @@ export const DELETE_ORDERS_URL = `${BASE_URL}/orders/delete`;
 export const UPDATE_ORDERS_URL = `${BASE_URL}/orders/update`;
 
 // Subscription API
-
 export const SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans`;
+export const DELETE_SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans/delete`;

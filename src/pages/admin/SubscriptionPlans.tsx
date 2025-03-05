@@ -5,7 +5,7 @@ import { FaPlus, FaEdit, FaTrash, FaCrown } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
-import { SUBSCRIPTION_PLAN } from "@/api/api";
+import { SUBSCRIPTION_PLAN, DELETE_SUBSCRIPTION_PLAN } from "@/api/api";
 import InputWithIcon from "@/components/InputWithIcon";
 
 interface SubscriptionPlan {
@@ -34,14 +34,40 @@ interface PlanFormData {
   status: "active" | "inactive";
 }
 
+const formatStorageSize = (size: string): string => {
+  if (!size) return "0 MB";
+  return size; // Since we're now storing the complete string (e.g., "10 GB")
+};
+
+const parseStorageInput = (input: string): string => {
+  // Only get the numeric value, strip any units
+  return input.replace(/[^0-9.]/g, "");
+};
+
+const handleStorageChange = (
+  value: string,
+  unit: string,
+  setFormData: React.Dispatch<React.SetStateAction<PlanFormData>>
+) => {
+  const numericValue = parseStorageInput(value);
+  setFormData((prev) => ({
+    ...prev,
+    maxStorage: `${numericValue} ${unit}`,
+  }));
+};
+
 const SubscriptionPlans = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(
+    null
+  );
   const [formData, setFormData] = useState<PlanFormData>({
     name: "",
     description: "",
     price: 0,
-    maxStorage: "",
+    maxStorage: "0 MB",
     duration: 1,
     features: [""],
     maxProducts: 0,
@@ -87,6 +113,20 @@ const SubscriptionPlans = () => {
     },
   });
 
+  // Delete Plan Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => AXIOS.post(`${DELETE_SUBSCRIPTION_PLAN}/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
+      toast.success("Plan deleted successfully");
+      setIsDeleteModalOpen(false);
+      setPlanToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to delete plan");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.id) {
@@ -101,11 +141,11 @@ const SubscriptionPlans = () => {
       name: "",
       description: "",
       price: 0,
+      maxStorage: "0 MB",
       duration: 1,
       features: [""],
       maxProducts: 0,
       maxUsers: 1,
-      maxStorage: "",
       status: "active",
     });
   };
@@ -122,6 +162,17 @@ const SubscriptionPlans = () => {
       ...formData,
       features: formData.features.filter((_, i) => i !== index),
     });
+  };
+
+  const handleDelete = (plan: SubscriptionPlan) => {
+    setPlanToDelete(plan);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (planToDelete) {
+      deleteMutation.mutate(planToDelete.id);
+    }
   };
 
   if (isLoading) {
@@ -174,6 +225,12 @@ const SubscriptionPlans = () => {
                   >
                     <FaEdit className="w-4 h-4" />
                   </button>
+                  <button
+                    onClick={() => handleDelete(plan)}
+                    className="p-2 text-gray-600 hover:text-red-500"
+                  >
+                    <FaTrash className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
@@ -206,8 +263,10 @@ const SubscriptionPlans = () => {
                   <span className="font-medium">{plan.maxProducts}</span>
                 </div>
                 <div className="flex justify-between text-sm mt-2">
-                  <span className="text-gray-500">Max Storage</span>
-                  <span className="font-medium">{plan.maxStorage}</span>
+                  <span className="text-gray-500">Storage Limit</span>
+                  <span className="font-medium">
+                    {formatStorageSize(plan.maxStorage)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm mt-2">
                   <span className="text-gray-500">Max Users</span>
@@ -390,6 +449,44 @@ const SubscriptionPlans = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
+                Max Storage*
+              </label>
+              <div className="flex items-center gap-2">
+                <InputWithIcon
+                  type="number"
+                  required
+                  min="0"
+                  step="0.1"
+                  name="maxStorage"
+                  value={parseStorageInput(formData.maxStorage || "")}
+                  onChange={(e) =>
+                    handleStorageChange(
+                      e.target.value,
+                      formData.maxStorage?.includes("GB") ? "GB" : "MB",
+                      setFormData
+                    )
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                />
+                <select
+                  value={formData.maxStorage?.includes("GB") ? "GB" : "MB"}
+                  onChange={(e) => {
+                    handleStorageChange(
+                      parseStorageInput(formData.maxStorage || ""),
+                      e.target.value,
+                      setFormData
+                    );
+                  }}
+                  className="mt-1 w-24 border p-2 rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                >
+                  <option value="MB">MB</option>
+                  <option value="GB">GB</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Status
               </label>
               <select
@@ -419,7 +516,7 @@ const SubscriptionPlans = () => {
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover disabled:opacity-50"
+              className="px-4 py-2 text-sm flex font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover disabled:opacity-50"
             >
               {createMutation.isPending || updateMutation.isPending ? (
                 <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
@@ -431,6 +528,42 @@ const SubscriptionPlans = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Add Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPlanToDelete(null);
+        }}
+        title="Delete Subscription Plan"
+      >
+        <div className="p-6">
+          <p className="text-gray-700 mb-4">
+            Are you sure you want to delete the subscription plan "
+            {planToDelete?.name}"? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+              className="px-4 flex py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 disabled:opacity-50"
+            >
+              {deleteMutation.isPending ? (
+                <Spinner size="16px" color="#ffffff" className="mx-4 my-1" />
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
