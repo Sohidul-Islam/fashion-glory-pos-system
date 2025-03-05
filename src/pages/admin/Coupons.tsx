@@ -28,6 +28,11 @@ type CouponFormData = Omit<Coupon, "usedCount"> & {
   id?: number;
 };
 
+const formatDateForInput = (date: string | Date): string => {
+  const d = new Date(date);
+  return format(d, "yyyy-MM-dd");
+};
+
 const Coupons = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,8 +44,8 @@ const Coupons = () => {
     type: "percentage",
     value: 0,
     maxUses: 1,
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: new Date().toISOString().split("T")[0],
+    startDate: formatDateForInput(new Date()),
+    endDate: formatDateForInput(new Date()),
     minPurchaseAmount: 0,
     maxDiscountAmount: 0,
     status: "active",
@@ -112,8 +117,8 @@ const Coupons = () => {
     const { id, ...rest } = coupon;
     setFormData({
       ...rest,
-      startDate: new Date(rest.startDate).toISOString().split("T")[0],
-      endDate: new Date(rest.endDate).toISOString().split("T")[0],
+      startDate: formatDateForInput(rest.startDate),
+      endDate: formatDateForInput(rest.endDate),
       id,
     });
     setIsModalOpen(true);
@@ -136,8 +141,8 @@ const Coupons = () => {
       type: "percentage",
       value: 0,
       maxUses: 1,
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date().toISOString().split("T")[0],
+      startDate: formatDateForInput(new Date()),
+      endDate: formatDateForInput(new Date()),
       minPurchaseAmount: 0,
       maxDiscountAmount: 0,
       status: "active",
@@ -337,6 +342,7 @@ const Coupons = () => {
                   required
                   name="startDate"
                   value={formData.startDate}
+                  max={formData.endDate}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -354,8 +360,8 @@ const Coupons = () => {
                   type="date"
                   required
                   name="endDate"
-                  min={formData.startDate}
                   value={formData.endDate}
+                  min={formData.startDate}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
