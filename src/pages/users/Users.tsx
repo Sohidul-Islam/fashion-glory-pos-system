@@ -401,8 +401,8 @@ const Users = () => {
                   className="mt-1 block border p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
                 >
                   <option value="super admin">Super Admin</option>
-                  <option value="admin">Admin</option>
-                  <option value="default">Default</option>
+                  {/* <option value="admin">Admin</option> */}
+                  <option value="shop">Shop</option>
                 </select>
               </div>
             </div>

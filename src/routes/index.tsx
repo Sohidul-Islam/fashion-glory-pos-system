@@ -10,9 +10,9 @@ import Suppliers from "../pages/inventory/Suppliers";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
 import Register from "../pages/Register";
-import Purchase from "../pages/Purchase";
+// import Purchase from "../pages/Purchase";
 import Layout from "@/components/Layout";
-import Customers from "@/pages/Customers";
+// import Customers from "@/pages/Customers";
 import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
 import Categories from "../pages/inventory/Categories";
@@ -24,6 +24,8 @@ import VerifyEmail from "@/pages/auth/VerifyEmail";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
 import Users from "@/pages/users/Users";
+import NotFound from "@/pages/NotFound";
+import AuthorizedRoute from "../components/AuthorizedRoute";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -35,6 +37,7 @@ const AppRoutes = () => {
       </div>
     );
   }
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -52,31 +55,38 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-
-        {/* Sales Routes */}
-        <Route path="sales">
-          <Route path="pos" element={<POS />} />
-          <Route path="orders" element={<Orders />} />
+        <Route
+          element={<AuthorizedRoute allowedRoles={["shop", "super admin"]} />}
+        >
+          <Route path="dashboard" element={<Dashboard />} />
         </Route>
 
-        {/* Inventory Routes */}
-        <Route path="inventory">
-          <Route path="products" element={<Products />} />
-          <Route path="suppliers" element={<Suppliers />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="brands" element={<Brands />} />
-          <Route path="units" element={<Units />} />
-          <Route path="sizes" element={<Sizes />} />
-          <Route path="colors" element={<Colors />} />
+        {/* Shop Only Routes */}
+        <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
+          <Route path="sales">
+            <Route path="pos" element={<POS />} />
+            <Route path="orders" element={<Orders />} />
+          </Route>
+          <Route path="inventory">
+            <Route path="products" element={<Products />} />
+            <Route path="suppliers" element={<Suppliers />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="brands" element={<Brands />} />
+            <Route path="units" element={<Units />} />
+            <Route path="sizes" element={<Sizes />} />
+            <Route path="colors" element={<Colors />} />
+          </Route>
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
-        {/* Other Routes */}
-        <Route path="customers" element={<Customers />} />
-        <Route path="purchase" element={<Purchase />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="users" element={<Users />} />
+        {/* Admin Only Routes */}
+        <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
+          <Route path="users" element={<Users />} />
+        </Route>
+
+        {/* 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );
