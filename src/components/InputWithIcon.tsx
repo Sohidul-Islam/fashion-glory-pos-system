@@ -1,5 +1,4 @@
 import {
-  ChangeEvent,
   InputHTMLAttributes,
   ComponentType,
   SVGProps,
@@ -14,7 +13,7 @@ interface InputWithIconProps extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   value?: string;
   defaultValue?: string;
-  onChange?: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange?: (e: any) => void;
   placeholder?: string;
   type?: string;
   required?: boolean;
