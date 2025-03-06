@@ -28,6 +28,7 @@ import NotFound from "@/pages/NotFound";
 import AuthorizedRoute from "../components/AuthorizedRoute";
 import SubscriptionPlans from "@/pages/admin/SubscriptionPlans";
 import Coupons from "@/pages/admin/Coupons";
+import UserSubscriptions from "@/pages/admin/UserSubscriptions";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -93,6 +94,7 @@ const AppRoutes = () => {
         <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
           <Route path="users" element={<Users />} />
           <Route path="coupons" element={<Coupons />} />
+          <Route path="user-plans" element={<UserSubscriptions />} />
         </Route>
 
         {/* 404 Route */}

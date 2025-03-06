@@ -15,6 +15,7 @@ import {
   FaCrown,
   FaTicketAlt,
 } from "react-icons/fa";
+import { MdSubscriptions } from "react-icons/md";
 
 export const menuItems = [
   {
@@ -159,7 +160,12 @@ export const adminMenuItems = [
     path: "/users",
     icon: <FaUsers className="w-5 h-5" />,
   },
-
+  {
+    id: "user-subscriptions",
+    title: "Users Plans",
+    path: "/user-plans",
+    icon: <MdSubscriptions className="w-5 h-5" />,
+  },
   {
     id: "subscriptions",
     title: "Subscriptions",

@@ -12,6 +12,7 @@ import {
 } from "@/api/api";
 import InputWithIcon from "@/components/InputWithIcon";
 import { useAuth } from "@/context/AuthContext";
+import SubscriptionModal from "@/components/SubscriptionModal";
 
 interface SubscriptionPlan {
   id: number;
@@ -89,6 +90,9 @@ const SubscriptionPlans = () => {
   });
   const { user } = useAuth();
   const isShopUser = user?.accountType === "shop";
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
+    null
+  );
 
   // Fetch Plans
   const { data: plans = [], isLoading } = useQuery({
@@ -116,7 +120,7 @@ const SubscriptionPlans = () => {
   // Update Plan Mutation
   const updateMutation = useMutation({
     mutationFn: (data: PlanFormData) =>
-      AXIOS.put(`${SUBSCRIPTION_PLAN}/${data.id}`, data),
+      AXIOS.post(`${SUBSCRIPTION_PLAN}/${data.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
       toast.success("Plan updated successfully");
@@ -204,14 +208,7 @@ const SubscriptionPlans = () => {
   };
 
   const handleSubscribe = (plan: SubscriptionPlan) => {
-    const payload: SubscribePayload = {
-      planId: plan.id,
-      status: "active",
-      paymentStatus: "pending",
-      paymentMethod: "card",
-      amount: plan.price,
-    };
-    subscribeMutation.mutate(payload);
+    setSelectedPlan(plan);
   };
 
   if (isLoading) {
@@ -626,6 +623,12 @@ const SubscriptionPlans = () => {
           </div>
         </div>
       </Modal>
+
+      <SubscriptionModal
+        isOpen={!!selectedPlan}
+        onClose={() => setSelectedPlan(null)}
+        plan={selectedPlan!}
+      />
     </div>
   );
 };
