@@ -9,6 +9,7 @@ import Modal from "@/components/Modal";
 import Invoice from "@/components/Invoice";
 import { BiSpreadsheet } from "react-icons/bi";
 import ProductStatement from "@/components/ProductStatement";
+import Spinner from "@/components/Spinner";
 
 interface OrderItem {
   id: number;
@@ -268,7 +269,9 @@ const Orders: React.FC = () => {
               {isLoading || isFetching ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-4 text-center">
-                    <p>Loading...</p>
+                    <div className="flex justify-center items-center w-full">
+                      <Spinner color="#32cd32" size="40px" />
+                    </div>
                     {/* <Spinner color="#32cd32" size="15px" /> */}
                   </td>
                 </tr>

@@ -166,7 +166,9 @@ const Brands = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center">
-                    <Spinner color="#32cd32" size="24px" />
+                    <div className="flex justify-center items-center w-full">
+                      <Spinner color="#32cd32" size="40px" />
+                    </div>
                   </td>
                 </tr>
               ) : brands?.length === 0 ? (

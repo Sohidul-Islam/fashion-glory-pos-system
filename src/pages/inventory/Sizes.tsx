@@ -164,7 +164,9 @@ const Sizes = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center">
-                    <Spinner className="mx-auto" />
+                    <div className="flex justify-center items-center w-full">
+                      <Spinner color="#32cd32" size="40px" />
+                    </div>
                   </td>
                 </tr>
               ) : (

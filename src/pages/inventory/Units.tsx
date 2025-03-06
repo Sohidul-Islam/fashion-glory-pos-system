@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -165,7 +164,9 @@ const Units = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center">
-                    <Spinner color="#32cd32" size="24px" />
+                    <div className="flex justify-center items-center w-full">
+                      <Spinner color="#32cd32" size="40px" />
+                    </div>
                   </td>
                 </tr>
               ) : units?.length === 0 ? (

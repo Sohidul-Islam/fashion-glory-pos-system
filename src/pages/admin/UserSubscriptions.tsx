@@ -50,22 +50,6 @@ interface Subscription {
   SubscriptionPlan: Plan;
 }
 
-interface SubscriptionResponse {
-  status: boolean;
-  message: string;
-  data: {
-    subscriptions: Subscription[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      totalPages: number;
-      totalItems: number;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
-  };
-}
-
 const UserSubscriptions = () => {
   const queryClient = useQueryClient();
   const [selectedSubscription, setSelectedSubscription] =
@@ -83,7 +67,7 @@ const UserSubscriptions = () => {
   });
 
   // Fetch Subscriptions
-  const { data: subscriptionData, isLoading } = useQuery<SubscriptionResponse>({
+  const { data: subscriptionData, isLoading } = useQuery({
     queryKey: ["subscriptions", filters],
     queryFn: async () => {
       const response = await AXIOS.get(SUBSCRIBE_USER_PLAN, {
@@ -223,8 +207,10 @@ const UserSubscriptions = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="text-center py-4">
-                  <Spinner color="#32cd32" size="40px" />
+                <td colSpan={6} className="text-center  py-4">
+                  <div className="flex justify-center items-center w-full">
+                    <Spinner color="#32cd32" size="40px" />
+                  </div>
                 </td>
               </tr>
             ) : (subscriptionData?.subscriptions || []).length === 0 ? (
@@ -234,87 +220,93 @@ const UserSubscriptions = () => {
                 </td>
               </tr>
             ) : (
-              subscriptionData?.subscriptions.map((subscription) => (
-                <tr key={subscription.id}>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {subscription.User.businessName}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {subscription.User.email}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {subscription.User.phoneNumber}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {subscription.SubscriptionPlan.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      ${subscription.amount}
-                      {subscription.discount !== "0.00" && (
-                        <span className="text-green-500 ml-2">
-                          (-${subscription.discount})
-                        </span>
-                      )}
-                    </div>
-                    {subscription.coupon && (
-                      <div className="text-xs text-blue-500">
-                        Coupon: {subscription.coupon}
+              subscriptionData?.subscriptions.map(
+                (subscription: Subscription) => (
+                  <tr key={subscription.id}>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {subscription.User.businessName}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {format(new Date(subscription.startDate), "MMM d, yyyy")}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      to {format(new Date(subscription.endDate), "MMM d, yyyy")}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 capitalize">
-                      {subscription.paymentMethod}
-                    </div>
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        subscription.paymentStatus === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : subscription.paymentStatus === "failed"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {subscription.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        subscription.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : subscription.status === "expired"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {subscription.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => {
-                        setSelectedSubscription(subscription);
-                        setShowConfirmModal(true);
-                      }}
-                      className="text-brand-primary hover:text-brand-hover"
-                    >
-                      Update Status
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      <div className="text-sm text-gray-500">
+                        {subscription.User.email}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {subscription.User.phoneNumber}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {subscription.SubscriptionPlan.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        ${subscription.amount}
+                        {subscription.discount !== "0.00" && (
+                          <span className="text-green-500 ml-2">
+                            (-${subscription.discount})
+                          </span>
+                        )}
+                      </div>
+                      {subscription.coupon && (
+                        <div className="text-xs text-blue-500">
+                          Coupon: {subscription.coupon}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {format(
+                          new Date(subscription.startDate),
+                          "MMM d, yyyy"
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        to{" "}
+                        {format(new Date(subscription.endDate), "MMM d, yyyy")}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 capitalize">
+                        {subscription.paymentMethod}
+                      </div>
+                      <span
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          subscription.paymentStatus === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : subscription.paymentStatus === "failed"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {subscription.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          subscription.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : subscription.status === "expired"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {subscription.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => {
+                          setSelectedSubscription(subscription);
+                          setShowConfirmModal(true);
+                        }}
+                        className="text-brand-primary hover:text-brand-hover"
+                      >
+                        Update Status
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )
             )}
           </tbody>
         </table>
