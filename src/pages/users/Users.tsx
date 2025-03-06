@@ -16,6 +16,8 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
+import { MdSubscriptions } from "react-icons/md";
+import { format } from "date-fns";
 
 interface User {
   id: number;
@@ -29,6 +31,29 @@ interface User {
   accountType: "super admin" | "admin" | "default";
   isVerified: boolean;
   createdAt: string;
+  UserSubscriptions?: {
+    id: number;
+    startDate: string;
+    endDate: string;
+    status: "active" | "expired" | "cancelled";
+    paymentStatus: "pending" | "completed" | "failed";
+    paymentMethod: "cash" | "card";
+    amount: string;
+    discount: string;
+    coupon: string | null;
+    SubscriptionPlan: {
+      id: number;
+      name: string;
+      description: string;
+      price: string;
+      duration: number;
+      features: string[];
+      maxProducts: number;
+      maxStorage: string;
+      maxUsers: number;
+      status: string;
+    };
+  }[];
 }
 
 interface UserResponse {
@@ -183,6 +208,9 @@ const Users = () => {
                   Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Subscription
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -223,9 +251,9 @@ const Users = () => {
                         {user.location}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           user.accountStatus === "active"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
@@ -234,12 +262,94 @@ const Users = () => {
                         {user.accountStatus}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">
-                        {user.accountType}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.accountType}
                     </td>
                     <td className="px-6 py-4">
+                      {user.UserSubscriptions?.length ? (
+                        <div className="space-y-2">
+                          {user.UserSubscriptions.map((sub) => (
+                            <div
+                              key={sub.id}
+                              className="flex flex-col text-sm bg-gray-50 p-2 rounded-md border border-gray-200"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <MdSubscriptions className="text-brand-primary w-4 h-4" />
+                                <span className="font-medium">
+                                  {sub.SubscriptionPlan.name}
+                                </span>
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Status:</span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium
+                                    ${
+                                      sub.status === "active"
+                                        ? "bg-green-100 text-green-800"
+                                        : sub.status === "expired"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }`}
+                                  >
+                                    {sub.status}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Payment:
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium
+                                    ${
+                                      sub.paymentStatus === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : sub.paymentStatus === "failed"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }`}
+                                  >
+                                    {sub.paymentStatus}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Amount:</span>
+                                  <span className="font-medium">
+                                    ${sub.amount}
+                                  </span>
+                                </div>
+                                {sub.discount !== "0.00" && (
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">
+                                      Discount:
+                                    </span>
+                                    <span className="text-green-600">
+                                      ${sub.discount}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">
+                                    Expires:
+                                  </span>
+                                  <span>
+                                    {format(
+                                      new Date(sub.endDate),
+                                      "MMM dd, yyyy"
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          No active subscription
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
                           setSelectedUser(user);
@@ -247,7 +357,7 @@ const Users = () => {
                         }}
                         className="text-brand-primary hover:text-brand-hover"
                       >
-                        <FaEdit className="h-5 w-5" />
+                        <FaEdit className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>
