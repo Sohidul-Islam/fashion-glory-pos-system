@@ -16,6 +16,8 @@ import Spinner from "@/components/Spinner";
 import Modal from "@/components/Modal";
 import { format } from "date-fns";
 import CreateUserForm from "./CreateUserForm";
+import { useSearchParams } from "react-router-dom";
+import debounce from "lodash/debounce";
 
 interface Parent {
   id: number;
@@ -67,11 +69,26 @@ const ChildUsers = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState({
+    searchKey: searchParams.get("searchKey") || "",
+    role: searchParams.get("role") || "",
+    status: searchParams.get("status") || "",
+  });
+  const page = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 10;
 
   const { data, isLoading } = useQuery<ChildUsersResponse>({
-    queryKey: ["childUsers"],
+    queryKey: ["childUsers", page, pageSize, filters],
     queryFn: async () => {
-      const response = await AXIOS.get(CHILD_USERS_URL);
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        ...(filters.searchKey && { searchKey: filters.searchKey }),
+        ...(filters.role && { role: filters.role }),
+        ...(filters.status && { status: filters.status }),
+      });
+      const response = await AXIOS.get(`${CHILD_USERS_URL}?${params}`);
       return response.data;
     },
   });
@@ -96,13 +113,29 @@ const ChildUsers = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner color="#32cd32" size="40px" />
-      </div>
-    );
-  }
+  const updateFilters = debounce((newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setSearchParams({
+      page: "1",
+      pageSize: String(pageSize),
+      ...newFilters,
+    });
+  }, 100);
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      page: String(newPage),
+    });
+  };
+
+  //   if (isLoading) {
+  //     return (
+  //       <div className="flex justify-center items-center h-64">
+  //         <Spinner color="#32cd32" size="40px" />
+  //       </div>
+  //     );
+  //   }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -114,6 +147,39 @@ const ChildUsers = () => {
         >
           <FaPlus /> Add User
         </button>
+      </div>
+
+      <div className="mb-6 grid grid-cols-5 gap-4">
+        <input
+          type="text"
+          placeholder="Search by name, email or phone..."
+          className="border rounded-md px-3 py-2"
+          value={filters.searchKey}
+          onChange={(e) =>
+            updateFilters({ ...filters, searchKey: e.target.value })
+          }
+        />
+        <select
+          className="border rounded-md px-3 py-2"
+          value={filters.role}
+          onChange={(e) => updateFilters({ ...filters, role: e.target.value })}
+        >
+          <option value="">All Roles</option>
+          <option value="manager">Manager</option>
+          <option value="cashier">Cashier</option>
+          <option value="staff">Staff</option>
+        </select>
+        <select
+          className="border rounded-md px-3 py-2"
+          value={filters.status}
+          onChange={(e) =>
+            updateFilters({ ...filters, status: e.target.value })
+          }
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
       </div>
 
       <div className="overflow-x-auto">
@@ -141,72 +207,128 @@ const ChildUsers = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data?.users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{user.fullName}</span>
-                    <span className="text-sm text-gray-500">{user.email}</span>
+            {isLoading ? (
+              <tr>
+                <td colSpan={6}>
+                  <div className="flex justify-center items-center h-64">
+                    <Spinner color="#32cd32" size="40px" />
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col">
-                    <span className="font-medium">
-                      {user.parent.businessName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {user.parent.businessType}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="capitalize">{user.role}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {format(new Date(user.createdAt), "MMM dd, yyyy")}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setShowEditModal(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <FaEdit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setShowDetailsModal(true);
-                    }}
-                    className="text-brand-primary hover:text-brand-hover"
-                  >
-                    <FaUserCog className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <FaTrash className="w-5 h-5" />
-                  </button>
                 </td>
               </tr>
-            ))}
+            ) : null}
+            {!isLoading &&
+              data?.users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.fullName}</span>
+                      <span className="text-sm text-gray-500">
+                        {user.email}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {user.parent.businessName}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {user.parent.businessType}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="capitalize">{user.role}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {format(new Date(user.createdAt), "MMM dd, yyyy")}
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-2">
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowEditModal(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <FaEdit className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowDetailsModal(true);
+                      }}
+                      className="text-brand-primary hover:text-brand-hover"
+                    >
+                      <FaUserCog className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <FaTrash className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
+
+      {/* Updated pagination controls */}
+      {data?.pagination && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {(page - 1) * data.pagination.pageSize + 1} to{" "}
+            {Math.min(
+              page * data.pagination.pageSize,
+              data.pagination.totalCount
+            )}{" "}
+            of {data.pagination.totalCount} results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {Array.from(
+              { length: data.pagination.totalPages },
+              (_, i) => i + 1
+            ).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-3 py-1 border rounded-md ${
+                  pageNum === page ? "bg-brand-primary text-white" : ""
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={!data.pagination.hasMore}
+              className="px-3 py-1 border rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create User Modal */}
       <Modal

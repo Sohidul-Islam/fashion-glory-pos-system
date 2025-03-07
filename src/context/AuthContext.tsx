@@ -66,6 +66,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           email: user?.child ? user?.child?.email : user?.email,
         },
       });
+
+      if (!response.status) {
+        navigate("/login");
+      }
       return response.data;
     },
     enabled: !!(user?.child ? user?.child?.email : user?.email),

@@ -153,7 +153,7 @@ const Coupons = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <Spinner size="40px" />
+        <Spinner color="#32cd32" size="40px" />
       </div>
     );
   }
