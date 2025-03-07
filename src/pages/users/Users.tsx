@@ -98,15 +98,21 @@ const Users = () => {
   const updateUserMutation = useMutation({
     mutationFn: async (data: Partial<User> & { userId: number }) => {
       const response = await AXIOS.post(`/profile?userId=${data.userId}`, data);
-      return response.data;
+
+      return response;
     },
-    onSuccess: () => {
-      toast.success("User updated successfully");
-      setShowEditModal(false);
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+    onSuccess: (data) => {
+      console.log({ data });
+      if (data.status) {
+        toast.success("User updated successfully");
+        setShowEditModal(false);
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      } else {
+        toast.error((data as any).message);
+      }
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to update user");
+      toast.error(error?.message || "Failed to update user");
     },
   });
 

@@ -31,9 +31,10 @@ import Coupons from "@/pages/admin/Coupons";
 import UserSubscriptions from "@/pages/admin/UserSubscriptions";
 import ChildUsers from "@/pages/users/ChildUsers";
 import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 const AppRoutes = () => {
-  const { isLoadingProfile } = useAuth();
+  const { isLoadingProfile, user } = useAuth();
 
   if (isLoadingProfile) {
     return (
@@ -63,11 +64,26 @@ const AppRoutes = () => {
         <Route
           element={<AuthorizedRoute allowedRoles={["shop", "super admin"]} />}
         >
+          <Route
+            path="dashboard"
+            element={
+              user?.accountType === "super admin" ? (
+                <AdminDashboard />
+              ) : (
+                <Dashboard />
+              )
+            }
+          />
+        </Route>
+        <Route
+          element={<AuthorizedRoute allowedRoles={["shop", "super admin"]} />}
+        >
           <Route path="dashboard" element={<Dashboard />} />
         </Route>
 
         {/* Shop Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="sales">
             <Route path="pos" element={<POS />} />
             <Route path="orders" element={<Orders />} />
@@ -96,6 +112,7 @@ const AppRoutes = () => {
 
         {/* Super Admin Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="users/child" element={<ChildUsers />} />
           <Route path="coupons" element={<Coupons />} />
