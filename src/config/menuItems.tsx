@@ -16,6 +16,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
+import { RiProfileFill } from "react-icons/ri";
 
 export const menuItems = [
   {
@@ -119,6 +120,12 @@ export const menuItems = [
     title: "Role",
     path: "/users/child",
     icon: <FaUser className="w-5 h-5" />,
+  },
+  {
+    id: "profile",
+    title: "Profile",
+    path: "/profile",
+    icon: <RiProfileFill className="w-5 h-5" />,
   },
   {
     id: "settings",

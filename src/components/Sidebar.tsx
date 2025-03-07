@@ -39,13 +39,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   return (
     <div className="h-screen bg-white shadow-lg w-sidebar">
-      <div className="h-16 flex items-center justify-center border-b">
-        <LogoSvg className="h-[90px]" />
+      <div className="h-20 flex items-center justify-center border-b border-gray-200/80 px-4">
+        {user?.accountType === "shop" ? (
+          <div className="relative group">
+            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-300">
+              <img
+                src={user.image || "/default-avatar.png"}
+                alt={user.businessName || "Shop Logo"}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-max opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs py-1 px-2 rounded-md pointer-events-none">
+              {user.businessName}
+            </div>
+          </div>
+        ) : (
+          <div className="hover:scale-105 transition-transform duration-300">
+            <LogoSvg className="h-[50px] w-auto" />
+          </div>
+        )}
       </div>
 
       <nav className="mt-4 h-[calc(100vh-4rem)] overflow-y-auto">
         {(user?.accountType === "shop" ? menuItems : adminMenuItems).map(
-          (item) => (
+          (item: {
+            id: string;
+            title: string;
+            path: string;
+            icon: JSX.Element;
+            submenu?: Array<{
+              id: string;
+              title: string;
+              path: string;
+              icon: JSX.Element;
+            }>;
+          }) => (
             <div key={item.id}>
               {item.submenu ? (
                 // Menu with submenu

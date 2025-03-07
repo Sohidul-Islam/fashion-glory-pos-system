@@ -17,6 +17,7 @@ interface User {
   accountType?: "super admin" | "shop";
   id?: number;
   businessName?: string;
+  image?: string;
   child: {
     email: string;
     id?: number;

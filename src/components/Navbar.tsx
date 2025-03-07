@@ -34,7 +34,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  console.log({ user });
   // const [notifications] = useState([
   //   { id: 1, text: "New order received", time: "2 min ago" },
   //   { id: 2, text: "Product stock low", time: "1 hour ago" },
@@ -75,82 +74,84 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       {/* Right Section */}
       <div className="flex items-center gap-2">
         {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-full hover:bg-gray-100 relative"
-          >
-            <FaBell className="h-5 w-5 text-gray-500" />
-            {stockAlerts?.notifications &&
-              stockAlerts?.notifications?.length > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-              )}
-          </button>
+        {user?.accountType === "shop" && (
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 rounded-full hover:bg-gray-100 relative"
+            >
+              <FaBell className="h-5 w-5 text-gray-500" />
+              {stockAlerts?.notifications &&
+                stockAlerts?.notifications?.length > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                )}
+            </button>
 
-          {/* Notifications Dropdown */}
-          {showNotifications && stockAlerts && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border">
-              <div className="px-4 py-2 border-b">
-                <h3 className="text-sm font-semibold">Stock Alerts</h3>
-                <div className="flex gap-3 mt-2 text-xs">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    Out of Stock ({stockAlerts.summary.outOfStock})
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                    Low Stock ({stockAlerts.summary.lowStock})
-                  </span>
+            {/* Notifications Dropdown */}
+            {showNotifications && stockAlerts && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border">
+                <div className="px-4 py-2 border-b">
+                  <h3 className="text-sm font-semibold">Stock Alerts</h3>
+                  <div className="flex gap-3 mt-2 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      Out of Stock ({stockAlerts.summary.outOfStock})
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                      Low Stock ({stockAlerts.summary.lowStock})
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {stockAlerts.notifications.map((alert) => (
-                  <div
-                    key={`${alert.productId}-${alert.variantId}`}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
-                          alert.status === "out_of_stock"
-                            ? "bg-red-500"
-                            : "bg-yellow-500"
-                        }`}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">
-                          {alert.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          SKU: {alert.sku}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded ${
-                              alert.status === "out_of_stock"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {alert.currentStock} in stock
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Alert at: {alert.alertQuantity}
-                          </span>
+                <div className="max-h-64 overflow-y-auto">
+                  {stockAlerts.notifications.map((alert) => (
+                    <div
+                      key={`${alert.productId}-${alert.variantId}`}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${
+                            alert.status === "out_of_stock"
+                              ? "bg-red-500"
+                              : "bg-yellow-500"
+                          }`}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {alert.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            SKU: {alert.sku}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded ${
+                                alert.status === "out_of_stock"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                              }`}
+                            >
+                              {alert.currentStock} in stock
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              Alert at: {alert.alertQuantity}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="border-t px-4 py-2 text-center">
+                  <button className="text-sm text-brand-primary hover:text-brand-hover">
+                    View All Stock Alerts
+                  </button>
+                </div>
               </div>
-              <div className="border-t px-4 py-2 text-center">
-                <button className="text-sm text-brand-primary hover:text-brand-hover">
-                  View All Stock Alerts
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Profile Menu */}
         <div className="relative">

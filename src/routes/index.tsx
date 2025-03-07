@@ -32,6 +32,7 @@ import UserSubscriptions from "@/pages/admin/UserSubscriptions";
 import ChildUsers from "@/pages/users/ChildUsers";
 import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ProfilePage from "@/pages/profile/ProfilePage";
 
 const AppRoutes = () => {
   const { isLoadingProfile, user } = useAuth();
@@ -75,11 +76,6 @@ const AppRoutes = () => {
             }
           />
         </Route>
-        <Route
-          element={<AuthorizedRoute allowedRoles={["shop", "super admin"]} />}
-        >
-          <Route path="dashboard" element={<Dashboard />} />
-        </Route>
 
         {/* Shop Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["shop"]} />}>
@@ -108,6 +104,7 @@ const AppRoutes = () => {
         >
           <Route path="subscriptions" element={<SubscriptionPlans />} />
           <Route path="users/child" element={<ChildUsers />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
 
         {/* Super Admin Only Routes */}
