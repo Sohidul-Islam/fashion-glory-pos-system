@@ -49,6 +49,7 @@ export const DELETE_SUBSCRIPTION_PLAN = `${BASE_URL}/subscription/plans/delete`;
 export const SUBSCRIBE_PLAN = `${BASE_URL}/subscription/subscribe`;
 export const SUBSCRIBE_USER_PLAN = `${BASE_URL}/subscription/all`;
 export const SUBSCRIBE_CONFIRM = `${BASE_URL}/subscription/payment`;
+export const SUBSCRIBE_LIMIT = `${BASE_URL}/subscription/limits`;
 
 // Coupon API
 export const COUPONS_URL = `${BASE_URL}/coupons`;

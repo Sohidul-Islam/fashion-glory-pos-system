@@ -2,6 +2,7 @@ import { BASE_URL } from "@/api/api";
 
 import axios from "axios";
 import { toast } from "react-toastify";
+import { getCookiesAsObject } from "./cookies";
 
 export const successToast = (
   message: string,
@@ -21,16 +22,28 @@ export const successToast = (
 export const uploadFile = async (file: File) => {
   // /api/images/upload this is route need to upload file to server as image form data multipart/form-data
   try {
+    let accessToken = null;
+
+    if (document.cookie.length > 0) {
+      const { access_token } = getCookiesAsObject();
+      accessToken = access_token || null;
+    }
     const formData = new FormData();
     formData.append("image", file);
     const response = await axios.post(BASE_URL + "/images/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     return response?.data?.data?.original;
-  } catch (error) {
-    console.log(error);
+  } catch (error: unknown) {
+    console.error(error);
+    if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error("An unknown error occurred");
+    }
     return null;
   }
 };

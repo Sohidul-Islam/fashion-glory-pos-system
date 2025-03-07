@@ -8,7 +8,7 @@ import Orders from "../pages/sales/Orders";
 import Products from "../pages/inventory/Products";
 import Suppliers from "../pages/inventory/Suppliers";
 import Reports from "../pages/Reports";
-import Settings from "../pages/Settings";
+// import Settings from "../pages/Settings";
 import Register from "../pages/Register";
 // import Purchase from "../pages/Purchase";
 import Layout from "@/components/Layout";
@@ -30,6 +30,7 @@ import SubscriptionPlans from "@/pages/admin/SubscriptionPlans";
 import Coupons from "@/pages/admin/Coupons";
 import UserSubscriptions from "@/pages/admin/UserSubscriptions";
 import ChildUsers from "@/pages/users/ChildUsers";
+import SubscriptionLimits from "@/pages/subscription/SubscriptionLimits";
 
 const AppRoutes = () => {
   const { isLoadingProfile } = useAuth();
@@ -81,7 +82,8 @@ const AppRoutes = () => {
             <Route path="colors" element={<Colors />} />
           </Route>
           <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
+          {/* <Route path="settings" element={<Settings />} /> */}
+          <Route path="settings" element={<SubscriptionLimits />} />
         </Route>
 
         {/* Admin Only Routes */}
