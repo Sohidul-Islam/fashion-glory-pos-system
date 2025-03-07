@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import Spinner from "@/components/Spinner";
 import { MdSubscriptions } from "react-icons/md";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 interface User {
   id: number;
@@ -132,6 +133,18 @@ const Users = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Users</h1>
         <div className="flex gap-2">
+          <Link
+            to="/users/child"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            View Child Users
+          </Link>
+          <Link
+            to="/users/create"
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-md hover:bg-brand-hover"
+          >
+            Create User
+          </Link>
           <div className="relative">
             <input
               type="text"

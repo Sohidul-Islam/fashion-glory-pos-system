@@ -14,6 +14,7 @@ import {
   FaRulerHorizontal,
   FaCrown,
   FaTicketAlt,
+  FaUser,
 } from "react-icons/fa";
 import { MdSubscriptions } from "react-icons/md";
 
@@ -119,6 +120,12 @@ export const menuItems = [
     icon: <FaCrown className="w-5 h-5" />,
   },
   {
+    id: "users-child",
+    title: "Role",
+    path: "/users/child",
+    icon: <FaUser className="w-5 h-5" />,
+  },
+  {
     id: "settings",
     title: "Settings",
     path: "/settings",
@@ -172,7 +179,12 @@ export const adminMenuItems = [
     path: "/subscriptions",
     icon: <FaCrown className="w-5 h-5" />,
   },
-
+  {
+    id: "users-child",
+    title: "Role",
+    path: "/users/child",
+    icon: <FaUser className="w-5 h-5" />,
+  },
   {
     id: "coupons",
     title: "Coupons",

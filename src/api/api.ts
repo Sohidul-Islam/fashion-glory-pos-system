@@ -54,3 +54,7 @@ export const SUBSCRIBE_CONFIRM = `${BASE_URL}/subscription/payment`;
 export const COUPONS_URL = `${BASE_URL}/coupons`;
 export const DELETE_COUPON_URL = `${BASE_URL}/coupons/delete`;
 export const VALIDATE_COUPON_URL = `${COUPONS_URL}/validate`;
+
+// Add to existing endpoints
+export const CHILD_USERS_URL = `${BASE_URL}/user/child-users`;
+export const CREATE_CHILD_USER_URL = `${BASE_URL}/user/child-user`;
