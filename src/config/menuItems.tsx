@@ -4,10 +4,9 @@ import {
   FaBoxOpen,
   FaWarehouse,
   FaUsers,
-  FaChartBar,
   FaCog,
   FaFileInvoice,
-  FaTruck,
+  // FaTruck,
   FaTags,
   FaRuler,
   FaPalette,
@@ -63,12 +62,12 @@ export const menuItems = [
         path: "/inventory/categories",
         icon: <FaTags className="w-5 h-5" />,
       },
-      {
-        id: "suppliers",
-        title: "Suppliers",
-        path: "/inventory/suppliers",
-        icon: <FaTruck className="w-5 h-5" />,
-      },
+      // {
+      //   id: "suppliers",
+      //   title: "Suppliers",
+      //   path: "/inventory/suppliers",
+      //   icon: <FaTruck className="w-5 h-5" />,
+      // },
       {
         id: "brands",
         title: "Brands",
@@ -95,24 +94,20 @@ export const menuItems = [
       },
     ],
   },
-  {
-    id: "users",
-    title: "Users",
-    path: "/users",
-    icon: <FaUsers className="w-5 h-5" />,
-  },
+
   // {
   //   id: "customers",
   //   title: "Customers",
   //   path: "/customers",
   //   icon: <FaUsers className="w-5 h-5" />,
   // },
-  {
-    id: "reports",
-    title: "Reports",
-    path: "/reports",
-    icon: <FaChartBar className="w-5 h-5" />,
-  },
+
+  // {
+  //   id: "reports",
+  //   title: "Reports",
+  //   path: "/reports",
+  //   icon: <FaChartBar className="w-5 h-5" />,
+  // },
   {
     id: "subscriptions",
     title: "Subscriptions",
@@ -139,26 +134,6 @@ export const adminMenuItems = [
     title: "Dashboard",
     path: "/dashboard",
     icon: <FaHome className="w-5 h-5" />,
-  },
-  {
-    id: "sales",
-    title: "Sales",
-    path: "/sales",
-    icon: <FaShoppingCart className="w-5 h-5" />,
-    submenu: [
-      {
-        id: "pos",
-        title: "POS",
-        path: "/sales/pos",
-        icon: <FaFileInvoice className="w-5 h-5" />,
-      },
-      {
-        id: "orders",
-        title: "Orders",
-        path: "/sales/orders",
-        icon: <FaBoxOpen className="w-5 h-5" />,
-      },
-    ],
   },
 
   {

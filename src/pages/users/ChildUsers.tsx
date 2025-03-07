@@ -78,7 +78,7 @@ const ChildUsers = () => {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      await AXIOS.delete(`${CHILD_USERS_URL}/${userId}`);
+      await AXIOS.post(`${CHILD_USERS_URL}/delete/${userId}`);
     },
     onSuccess: () => {
       toast.success("User deleted successfully");

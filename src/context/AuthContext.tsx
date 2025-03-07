@@ -17,6 +17,10 @@ interface User {
   accountType?: "super admin" | "shop";
   id?: number;
   businessName?: string;
+  child: {
+    email: string;
+    id?: number;
+  } | null;
   // Add other user properties as needed
 }
 
@@ -44,7 +48,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     isSuccess,
     error,
   } = useQuery({
-    queryKey: [PROFILE_URL, { email: user?.email }],
+    queryKey: [
+      PROFILE_URL,
+      { email: user?.child ? user?.child?.email : user?.email },
+    ],
     queryFn: async () => {
       const { access_token } = getCookiesAsObject();
       if (!access_token || !user?.email) {
@@ -56,12 +63,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       const response = await AXIOS.get(PROFILE_URL, {
         params: {
-          email: user?.email,
+          email: user?.child ? user?.child?.email : user?.email,
         },
       });
       return response.data;
     },
-    enabled: !!user?.email,
+    enabled: !!(user?.child ? user?.child?.email : user?.email),
   });
 
   useEffect(() => {
@@ -94,6 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     onSuccess: (response: any) => {
       if (response.status) {
         const { user, token } = response.data;
+        console.log("login", { user });
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         document.cookie = `access_token=${token}; path=/`;

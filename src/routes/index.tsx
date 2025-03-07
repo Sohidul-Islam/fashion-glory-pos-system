@@ -28,8 +28,7 @@ import NotFound from "@/pages/NotFound";
 import AuthorizedRoute from "../components/AuthorizedRoute";
 import SubscriptionPlans from "@/pages/admin/SubscriptionPlans";
 import Coupons from "@/pages/admin/Coupons";
-
-import CreateUser from "@/pages/users/CreateUser";
+import UserSubscriptions from "@/pages/admin/UserSubscriptions";
 import ChildUsers from "@/pages/users/ChildUsers";
 
 const AppRoutes = () => {
@@ -91,13 +90,14 @@ const AppRoutes = () => {
         >
           <Route path="subscriptions" element={<SubscriptionPlans />} />
           <Route path="users/child" element={<ChildUsers />} />
-          <Route path="users/create" element={<CreateUser />} />
         </Route>
 
         {/* Super Admin Only Routes */}
         <Route element={<AuthorizedRoute allowedRoles={["super admin"]} />}>
           <Route path="users" element={<Users />} />
+          <Route path="users/child" element={<ChildUsers />} />
           <Route path="coupons" element={<Coupons />} />
+          <Route path="user-plans" element={<UserSubscriptions />} />
         </Route>
 
         {/* 404 Route */}

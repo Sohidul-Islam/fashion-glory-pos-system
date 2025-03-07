@@ -64,7 +64,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
   const mutation = useMutation({
     mutationFn: async (data: UserFormData) => {
       if (user) {
-        const response = await AXIOS.put(
+        const response = await AXIOS.post(
           `${CREATE_CHILD_USER_URL}/${user.id}`,
           data
         );
@@ -125,19 +125,17 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
           required
         />
 
-        {!user && (
-          <InputWithIcon
-            type="password"
-            name="password"
-            icon={<FaLock />}
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
-            required
-          />
-        )}
+        <InputWithIcon
+          type="password"
+          name="password"
+          icon={<FaLock />}
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
+          required={user ? false : true}
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -149,7 +147,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
               onChange={(e) =>
                 setFormData({ ...formData, role: e.target.value })
               }
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
+              className="mt-1 border block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
             >
               <option value="manager">Manager</option>
               <option value="cashier">Cashier</option>
@@ -171,7 +169,7 @@ const CreateUserForm = ({ user, onSuccess }: CreateUserFormProps) => {
                 status: e.target.value as "active" | "inactive",
               })
             }
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
+            className="mt-1 border block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

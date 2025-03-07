@@ -33,6 +33,8 @@ interface StockAlertResponse {
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  console.log({ user });
   // const [notifications] = useState([
   //   { id: 1, text: "New order received", time: "2 min ago" },
   //   { id: 2, text: "Product stock low", time: "1 hour ago" },
@@ -160,7 +162,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
               <FaUser className="h-4 w-4 text-brand-primary" />
             </div>
             <span className="text-sm text-gray-700 hidden md:inline">
-              {user?.email}
+              {user?.child ? user?.child?.email : user?.email}
             </span>
           </button>
 
