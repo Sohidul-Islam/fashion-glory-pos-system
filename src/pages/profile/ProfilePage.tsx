@@ -40,7 +40,7 @@ const ProfilePage = () => {
   const { data: profileData, isLoading } = useQuery<ProfileData>({
     queryKey: ["profile"],
     queryFn: async () => {
-      const response = await AXIOS.get(`/user/${user?.id}`);
+      const response = await AXIOS.get(`/single-user/${user?.id}`);
       setFormData(response.data);
       return response.data;
     },
@@ -107,7 +107,7 @@ const ProfilePage = () => {
   }
 
   const profile = profileData;
-  console.log({ profileData2: profileData });
+  
   if (!profile) return null;
 
   return (
