@@ -31,6 +31,16 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isLoadingProfile: boolean;
+  successMessage: {
+    message: string;
+    status: boolean;
+  };
+  setSuccessMessage: React.Dispatch<
+    React.SetStateAction<{
+      message: string;
+      status: boolean;
+    }>
+  >;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +49,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [successMessage, setSuccessMessage] = useState<{
+    message: string;
+    status: boolean;
+  }>({
+    message: "",
+    status: false,
+  });
+
   const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
 
@@ -86,7 +104,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   // Update user when profile data changes
   useEffect(() => {
-    console.log({ profileData, isSuccess });
     if (isSuccess) {
       if (profileData) {
         setUser(profileData);
@@ -106,19 +123,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     onSuccess: (response: any) => {
       if (response.status) {
         const { user, token } = response.data;
-        console.log("login", { user });
         setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         document.cookie = `access_token=${token}; path=/`;
         toast.success("Login successful!");
-        navigate("/dashboard");
+        setSuccessMessage({
+          message: "Login successful!",
+          status: true,
+        });
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
       } else {
         toast.error(response.message || "Login failed");
+        setSuccessMessage({
+          message: response.message || "Login failed",
+          status: false,
+        });
       }
     },
     onError: (error: any) => {
       console.error("Login error:", error);
       toast.error(error?.message || "Login failed");
+      setSuccessMessage({
+        message: error?.message || "Login failed",
+        status: false,
+      });
     },
   });
 
@@ -149,6 +179,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         user,
         login,
         logout,
+        successMessage,
+        setSuccessMessage,
         isLoadingProfile: isLoading,
         isLoading: loginMutation.isPending || isInitializing,
       }}

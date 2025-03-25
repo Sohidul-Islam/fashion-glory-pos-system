@@ -16,6 +16,7 @@ import BusinessIcon from "@/components/icons/BusinessIcon";
 import AXIOS from "@/api/network/Axios";
 import { REGISTER_URL } from "@/api/api";
 import Spinner from "@/components/Spinner";
+import AlertMsg from "@/components/shared/AlertMsg";
 
 interface RegisterForm {
   fullName: string;
@@ -45,6 +46,15 @@ const Register: React.FC = () => {
     verificationToken: "exampleVerificationToken123",
     isLoggedIn: false,
   });
+
+  const [successMessage, setSuccessMessage] = useState<{
+    message: string;
+    status: boolean;
+  }>({
+    message: "",
+    status: false,
+  });
+
   const navigate = useNavigate();
 
   const mutation = useMutation<unknown, Error, RegisterForm>({
@@ -53,15 +63,29 @@ const Register: React.FC = () => {
     },
     onSuccess: (response: any) => {
       if (response.status) {
-        toast.success("Registration successful!");
-        navigate("/login");
+        toast.success(response.message || "Registration successful!");
+        setSuccessMessage({
+          message: response.message || "Registration successful!",
+          status: true,
+        });
+        setTimeout(() => {
+          navigate("/login");
+        }, 5000);
       } else {
         toast.error(response.message || "Registration failed");
+        setSuccessMessage({
+          message: response.message || "Registration failed",
+          status: false,
+        });
       }
     },
     onError: (error: Error) => {
       console.error("Registration failed:", error);
       toast.error("An error occurred during registration.");
+      setSuccessMessage({
+        message: "An error occurred during registration.",
+        status: false,
+      });
     },
   });
 
@@ -87,6 +111,14 @@ const Register: React.FC = () => {
         <h2 className="text-center text-2xl font-medium text-gray-700">
           Register New Account
         </h2>
+
+        {successMessage.message && (
+          <AlertMsg
+            message={successMessage.message}
+            type={successMessage?.status ? "success" : "error"}
+            onClose={() => setSuccessMessage({ message: "", status: false })}
+          />
+        )}
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

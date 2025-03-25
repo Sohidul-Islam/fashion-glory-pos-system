@@ -7,6 +7,7 @@ import LockIcon from "@/components/icons/LockIcon";
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
+import AlertMsg from "@/components/shared/AlertMsg";
 
 interface Credentials {
   email: string;
@@ -18,7 +19,7 @@ const Login: React.FC = () => {
     email: "",
     password: "",
   });
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, successMessage, setSuccessMessage } = useAuth();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,6 +44,13 @@ const Login: React.FC = () => {
           Sign in to ERP
         </h2>
 
+        {successMessage.message && (
+          <AlertMsg
+            message={successMessage.message}
+            type={successMessage?.status ? "success" : "error"}
+            onClose={() => setSuccessMessage({ message: "", status: false })}
+          />
+        )}
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Email Field */}

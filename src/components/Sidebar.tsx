@@ -5,6 +5,7 @@ import { FaChevronDown } from "react-icons/fa";
 import { adminMenuItems, menuItems } from "../config/menuItems";
 import LogoSvg from "./icons/LogoSvg";
 import { useAuth } from "@/context/AuthContext";
+import FallbackAvatar from "./shared/FallbackAvatar";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -43,10 +44,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         {user?.accountType === "shop" ? (
           <div className="relative group">
             <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 shadow-md hover:shadow-lg transition-shadow duration-300">
-              <img
-                src={user.image || "/default-avatar.png"}
+              <FallbackAvatar
+                src={user.image || null}
                 alt={user.businessName || "Shop Logo"}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
               />
             </div>
 
@@ -56,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           </div>
         ) : (
           <div className="hover:scale-105 transition-transform duration-300">
-            <LogoSvg className="h-[50px] w-auto" />
+            <LogoSvg className="h-[80px] w-auto" />
           </div>
         )}
       </div>

@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { uploadFile } from "@/utils/utils";
+import FallbackAvatar from "@/components/shared/FallbackAvatar";
 
 interface ProfileData {
   id: number;
@@ -107,7 +108,7 @@ const ProfilePage = () => {
   }
 
   const profile = profileData;
-  
+
   if (!profile) return null;
 
   return (
@@ -119,7 +120,12 @@ const ProfilePage = () => {
           <div className="relative z-10 flex flex-col items-center">
             <div className="relative group">
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                <img
+                {/* <img
+                  src={previewImage || profile?.image || "/default-avatar.png"}
+                  alt={profile?.fullName}
+                  className="w-full h-full object-cover"
+                /> */}
+                <FallbackAvatar
                   src={previewImage || profile?.image || "/default-avatar.png"}
                   alt={profile?.fullName}
                   className="w-full h-full object-cover"
