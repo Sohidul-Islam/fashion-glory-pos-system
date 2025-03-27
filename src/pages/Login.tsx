@@ -1,13 +1,14 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import LogoSvg from "@/components/icons/LogoSvg";
+// import LogoSvg from "@/components/icons/LogoSvg";
 import EnvelopeIcon from "@/components/icons/EnvelopeIcon";
 import LockIcon from "@/components/icons/LockIcon";
 import InputWithIcon from "../components/InputWithIcon";
 import LoginContainer from "../components/LoginContainer";
 import Spinner from "@/components/Spinner";
 import AlertMsg from "@/components/shared/AlertMsg";
+import Logo from "@/components/Logo";
 
 interface Credentials {
   email: string;
@@ -36,7 +37,7 @@ const Login: React.FC = () => {
       <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl">
         {/* Logo */}
         <div className="text-center">
-          <LogoSvg className="h-[90px] w-auto mx-auto transition-transform duration-200 hover:scale-110" />
+          <Logo className="h-[90px] w-auto mx-auto transition-transform duration-200 hover:scale-110" />
         </div>
 
         {/* Title */}

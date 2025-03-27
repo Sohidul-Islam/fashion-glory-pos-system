@@ -13,6 +13,7 @@ import {
 import InputWithIcon from "@/components/InputWithIcon";
 import { useAuth } from "@/context/AuthContext";
 import SubscriptionModal from "@/components/SubscriptionModal";
+import FloatingContactButtons from "@/components/FloatingContactButtons";
 
 interface SubscriptionPlan {
   id: number;
@@ -258,16 +259,41 @@ const SubscriptionPlans = () => {
                     <button
                       onClick={() => handleSubscribe(plan)}
                       disabled={subscribeMutation.isPending}
-                      className="p-2 text-gray-600 hover:text-brand-primary"
+                      className={`
+                        inline-flex items-center gap-2
+                        px-4 py-2 text-sm font-medium
+                        rounded-md shadow-md
+                        transform transition-all duration-200
+                        ${
+                          subscribeMutation.isPending
+                            ? "bg-gray-300 cursor-not-allowed"
+                            : "bg-gradient-to-r from-brand-primary to-brand-hover text-white hover:scale-102 hover:shadow-lg active:scale-98"
+                        }
+                        group
+                      `}
                     >
                       {subscribeMutation.isPending ? (
-                        <Spinner
-                          size="16px"
-                          color="#ffffff"
-                          className="mx-auto"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Spinner size="14px" color="#ffffff" />
+                          <span>Processing</span>
+                        </div>
                       ) : (
-                        "Subscribe"
+                        <>
+                          <span>Subscribe</span>
+                          <svg
+                            className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 7l5 5m0 0l-5 5m5-5H6"
+                            />
+                          </svg>
+                        </>
                       )}
                     </button>
                   ) : (
@@ -629,6 +655,8 @@ const SubscriptionPlans = () => {
         onClose={() => setSelectedPlan(null)}
         plan={selectedPlan!}
       />
+
+      <FloatingContactButtons />
     </div>
   );
 };

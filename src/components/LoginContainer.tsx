@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import loginBg from "../assets/images/login-bg.png";
+import FloatingContactButtons from "./FloatingContactButtons";
 
 interface LoginContainerProps {
   children: ReactNode;
@@ -26,6 +27,8 @@ const LoginContainer: React.FC<LoginContainerProps> = ({ children }) => {
       <div className="relative z-10 flex-1 flex items-center justify-center p-4">
         {children}
       </div>
+
+      <FloatingContactButtons />
     </div>
   );
 };
