@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -294,7 +293,7 @@ const POS: React.FC = () => {
     "cash" | "card"
   >("cash");
   const [adjustments, setAdjustments] = useState<CartAdjustments>({
-    tax: { type: "percentage", value: 10 },
+    tax: { type: "percentage", value: 0 },
     discount: { type: "percentage", value: 0 },
     priceAdjustments: {},
   });
@@ -483,7 +482,7 @@ const POS: React.FC = () => {
       setShowInvoice(true);
       setCart([]);
       setAdjustments({
-        tax: { type: "percentage", value: 10 },
+        tax: { type: "percentage", value: 0 },
         discount: { type: "percentage", value: 0 },
         priceAdjustments: {},
       });
@@ -592,6 +591,9 @@ const POS: React.FC = () => {
     priceAdjustments: adjustments.priceAdjustments,
     subtotal: subtotal,
     total: total,
+    updateTax,
+    updateDiscount,
+    updateItemPrice,
   });
 
   if (isLoadingProducts || isLoadingCategories) {
