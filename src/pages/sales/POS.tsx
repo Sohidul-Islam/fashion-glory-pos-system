@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +12,9 @@ import {
   FaMoneyBill,
   FaQrcode,
   FaTimes,
+  // FaPercent,
+  // FaDollarSign,
+  // FaEdit,
 } from "react-icons/fa";
 import AXIOS from "@/api/network/Axios";
 import { PRODUCT_URL, CATEGORY_URL, ORDERS_URL } from "@/api/api";
@@ -84,6 +88,18 @@ interface OrderData {
   paymentMethod: "cash" | "card";
   verificationCode: string;
   expiryDate: string;
+}
+
+interface CartAdjustments {
+  tax: {
+    type: "fixed" | "percentage";
+    value: number;
+  };
+  discount: {
+    type: "fixed" | "percentage";
+    value: number;
+  };
+  priceAdjustments: { [key: string]: number };
 }
 
 // Add this component for variant selection modal
@@ -277,6 +293,11 @@ const POS: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "cash" | "card"
   >("cash");
+  const [adjustments, setAdjustments] = useState<CartAdjustments>({
+    tax: { type: "percentage", value: 10 },
+    discount: { type: "percentage", value: 0 },
+    priceAdjustments: {},
+  });
 
   const queryClient = useQueryClient();
 
@@ -369,13 +390,30 @@ const POS: React.FC = () => {
   };
 
   // Calculate totals
-  const subtotal = cart.reduce(
-    (sum, item) => sum + Number(item?.price || 0) * Number(item?.quantity || 0),
-    0
-  );
-  const tax = subtotal * 0.1; // 10% tax
-  const total = subtotal + tax;
+  const subtotal = cart.reduce((sum, item) => {
+    const adjustedPrice = adjustments.priceAdjustments[item.id] || item.price;
+    return sum + adjustedPrice * item.quantity;
+  }, 0);
 
+  const calculateTax = () => {
+    if (adjustments.tax.type === "percentage") {
+      return (subtotal * adjustments.tax.value) / 100;
+    }
+    return adjustments.tax.value;
+  };
+
+  const calculateDiscount = () => {
+    if (adjustments.discount.type === "percentage") {
+      return (subtotal * adjustments.discount.value) / 100;
+    }
+    return adjustments.discount.value;
+  };
+
+  const taxAmount = calculateTax();
+  const discountAmount = calculateDiscount();
+  const total = subtotal - discountAmount + taxAmount;
+
+  console.log(total);
   // Cart items count
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -421,16 +459,20 @@ const POS: React.FC = () => {
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
-          // Include variantId if a variant is selected
+          unitPrice: adjustments.priceAdjustments[item.id] || item.price,
           ...(item.selectedVariant && { variantId: item.selectedVariant.id }),
         })),
         customerName: customerInfo.name || "Walk-in Customer",
         phone: customerInfo.phone || "",
-        address: "", // Add address field if needed
-        email: "", // Add email field if needed
+        address: "",
+        email: "",
         paymentStatus: "completed",
         paymentMethod: selectedPaymentMethod,
         orderStatus: "completed",
+        tax: calculateTax(),
+        discount: calculateDiscount(),
+        subtotal: subtotal,
+        total: subtotal - calculateDiscount() + calculateTax(),
       };
 
       const response = await AXIOS.post(ORDERS_URL, orderData);
@@ -440,6 +482,11 @@ const POS: React.FC = () => {
       setCurrentOrder(data);
       setShowInvoice(true);
       setCart([]);
+      setAdjustments({
+        tax: { type: "percentage", value: 10 },
+        discount: { type: "percentage", value: 0 },
+        priceAdjustments: {},
+      });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-alerts"] });
     },
@@ -511,6 +558,41 @@ const POS: React.FC = () => {
     }
     return product.stock;
   };
+
+  const updateItemPrice = (itemId: string, newPrice: number) => {
+    setAdjustments((prev) => ({
+      ...prev,
+      priceAdjustments: {
+        ...prev.priceAdjustments,
+        [itemId]: newPrice,
+      },
+    }));
+  };
+
+  const updateTax = (newTax: number) => {
+    setAdjustments((prev) => ({
+      ...prev,
+      tax: { type: "percentage", value: Math.max(0, Math.min(100, newTax)) },
+    }));
+  };
+
+  const updateDiscount = (newDiscount: number) => {
+    setAdjustments((prev) => ({
+      ...prev,
+      discount: {
+        type: "percentage",
+        value: Math.max(0, Math.min(100, newDiscount)),
+      },
+    }));
+  };
+
+  console.log({
+    tax: adjustments.tax,
+    discount: adjustments.discount,
+    priceAdjustments: adjustments.priceAdjustments,
+    subtotal: subtotal,
+    total: total,
+  });
 
   if (isLoadingProducts || isLoadingCategories) {
     return (
@@ -788,9 +870,27 @@ const POS: React.FC = () => {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-500">
-                      ${Number(item?.price || 0).toFixed(2)} × {item.quantity}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-500">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={
+                          adjustments.priceAdjustments[item.id] || item.price
+                        }
+                        onChange={(e) =>
+                          updateItemPrice(
+                            item.id?.toString() || "",
+                            Number(e.target.value)
+                          )
+                        }
+                        className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                      />
+                      <span className="text-sm text-gray-500">
+                        × {item.quantity}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -821,18 +921,98 @@ const POS: React.FC = () => {
 
         {/* Totals and Checkout */}
         <div className="p-4 border-t bg-gray-50">
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-3 mb-4">
+            <div className="flex justify-between text-sm items-center">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Tax (10%)</span>
-              <span>${tax.toFixed(2)}</span>
+
+            {/* Tax Input */}
+            <div className="flex justify-between text-sm items-center">
+              <div className="flex items-center gap-2">
+                <span>Tax</span>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    value={adjustments.tax.value}
+                    onChange={(e) =>
+                      setAdjustments((prev) => ({
+                        ...prev,
+                        tax: {
+                          ...prev.tax,
+                          value: Math.max(0, Number(e.target.value)),
+                        },
+                      }))
+                    }
+                    className="w-20 px-2 py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  />
+                  <select
+                    value={adjustments.tax.type}
+                    onChange={(e) =>
+                      setAdjustments((prev) => ({
+                        ...prev,
+                        tax: {
+                          ...prev.tax,
+                          type: e.target.value as "fixed" | "percentage",
+                        },
+                      }))
+                    }
+                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  >
+                    <option value="fixed">$</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </div>
+              </div>
+              <span>${taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between font-semibold text-lg">
+
+            {/* Discount Input */}
+            <div className="flex justify-between text-sm items-center">
+              <div className="flex items-center gap-2">
+                <span>Discount</span>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    value={adjustments.discount.value}
+                    onChange={(e) =>
+                      setAdjustments((prev) => ({
+                        ...prev,
+                        discount: {
+                          ...prev.discount,
+                          value: Math.max(0, Number(e.target.value)),
+                        },
+                      }))
+                    }
+                    className="w-20 px-2 py-1 text-sm border rounded-l focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  />
+                  <select
+                    value={adjustments.discount.type}
+                    onChange={(e) =>
+                      setAdjustments((prev) => ({
+                        ...prev,
+                        discount: {
+                          ...prev.discount,
+                          type: e.target.value as "fixed" | "percentage",
+                        },
+                      }))
+                    }
+                    className="text-sm border-y border-r rounded-r bg-gray-50 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                  >
+                    <option value="fixed">$</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </div>
+              </div>
+              <span>-${discountAmount.toFixed(2)}</span>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-between font-semibold text-lg pt-2 border-t">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${(subtotal - discountAmount + taxAmount).toFixed(2)}</span>
             </div>
           </div>
 

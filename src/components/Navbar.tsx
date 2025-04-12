@@ -64,7 +64,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         {/* console name */}
 
         <div className="flex items-center">
-          {user?.accountType === "shop" && <LogoSvg height={"80"} />}
+          {user?.accountType === "shop" && <LogoSvg className={"!w-[80px]"} />}
           <p className="text-base md:text-lg font-semibold">
             {user?.accountType === "shop" ? "Shop Console" : "Admin Console"}
           </p>
